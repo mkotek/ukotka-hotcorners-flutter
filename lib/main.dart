@@ -28,7 +28,9 @@ void main() async {
   );
   
   windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.hide(); // Start hidden in tray by default
+    // await windowManager.hide(); // DISABLED DEBUG: Force show on start
+    await windowManager.show();
+    await windowManager.focus();
   });
 
   // Start HotCorner Engine
@@ -105,6 +107,11 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
     await _systemTray.setToolTip("uKotka HotCorners$statusText");
   }
 
+  void _log(String message) {
+    final file = File('${File(Platform.resolvedExecutable).parent.path}\\debug.log');
+    file.writeAsStringSync('${DateTime.now()}: $message\n', mode: FileMode.append);
+  }
+
   Future<void> _initSystemTray() async {
     String iconPath = 'assets/app_icon.ico';
     if (Platform.isWindows) {
@@ -112,16 +119,26 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
       final String exeDir = File(exePath).parent.path;
       iconPath = '$exeDir\\data\\flutter_assets\\assets\\app_icon.ico';
     }
+    
+    _log('Init System Tray. Icon Path: $iconPath');
+    _log('Icon file exists: ${File(iconPath).existsSync()}');
 
     try {
       await _systemTray.initSystemTray(
         title: "uKotka HotCorners",
         iconPath: iconPath,
       );
+      _log('System Tray initialized successfully');
     } catch (e) {
-      // If tray fails, ensure we show the window so the user can see something
-      windowManager.show();
+      _log('System Tray Error: $e');
     }
+
+    // Force show window to ensure UI availability
+    _log('Force showing window');
+    windowManager.show();
+
+    await _menu.buildFrom([
+      MenuItemLabel(label: 'Ustawienia', onClicked: (menuItem) => windowManager.show()),
 
     // Show settings on first launch or if specifically requested
     if (!ConfigService().hasConfig || ConfigService().launchAtStartup == false) {
