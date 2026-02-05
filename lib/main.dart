@@ -137,9 +137,6 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
     _log('Force showing window');
     windowManager.show();
 
-    await _menu.buildFrom([
-      MenuItemLabel(label: 'Ustawienia', onClicked: (menuItem) => windowManager.show()),
-
     // Show settings on first launch or if specifically requested
     if (!ConfigService().hasConfig || ConfigService().launchAtStartup == false) {
        // Small delay to ensure window system is ready
