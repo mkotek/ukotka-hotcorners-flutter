@@ -106,16 +106,29 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   }
 
   Future<void> _initSystemTray() async {
-    String iconPath = Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png';
-    
-    await _systemTray.initSystemTray(
-      title: "uKotka HotCorners",
-      iconPath: iconPath,
-    );
+    String iconPath = 'assets/app_icon.ico';
+    if (Platform.isWindows) {
+      final String exePath = Platform.resolvedExecutable;
+      final String exeDir = File(exePath).parent.path;
+      iconPath = '$exeDir\\data\\flutter_assets\\assets\\app_icon.ico';
+    }
+
+    try {
+      await _systemTray.initSystemTray(
+        title: "uKotka HotCorners",
+        iconPath: iconPath,
+      );
+    } catch (e) {
+      // If tray fails, ensure we show the window so the user can see something
+      windowManager.show();
+    }
 
     // Show settings on first launch or if specifically requested
     if (!ConfigService().hasConfig || ConfigService().launchAtStartup == false) {
-       windowManager.show();
+       // Small delay to ensure window system is ready
+       Future.delayed(const Duration(milliseconds: 500), () {
+         windowManager.show();
+       });
     }
 
     await _menu.buildFrom([
