@@ -5,6 +5,7 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:system_tray/system_tray.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'dart:async';
+import 'dart:io';
 
 import 'logic/localization.dart';
 import 'logic/config_service.dart';

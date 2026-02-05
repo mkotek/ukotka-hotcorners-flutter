@@ -23,7 +23,7 @@ class ConfigService {
   // Settings
   MonitorMode monitorMode = MonitorMode.primaryOnly;
   String? targetDisplayId;
-  final Map<String, CornerConfig> configs = {}; // key: displayId_cornerIndex
+  Map<String, CornerConfig> configs = {}; // key: displayId_cornerIndex
   
   bool get hasConfig => configs.isNotEmpty;
 
