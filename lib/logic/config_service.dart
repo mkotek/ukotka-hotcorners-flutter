@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+import 'package:path/path.dart' as p;
 import '../models/corner_config.dart';
 
 enum MonitorMode {
@@ -13,7 +14,11 @@ class ConfigService {
   factory ConfigService() => _instance;
   ConfigService._internal();
 
-  late SharedPreferences _prefs;
+  File get _settingsFile {
+    final exePath = Platform.resolvedExecutable;
+    final exeDir = p.dirname(exePath);
+    return File(p.join(exeDir, 'settings.json'));
+  }
   
   // Settings
   MonitorMode monitorMode = MonitorMode.primaryOnly;
@@ -24,31 +29,46 @@ class ConfigService {
   bool isSuspended = false;
 
   Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
-    _load();
+    await _load();
   }
 
-  void _load() {
-    monitorMode = MonitorMode.values[_prefs.getInt('monitorMode') ?? 0];
-    targetDisplayId = _prefs.getString('targetDisplayId');
-    launchAtStartup = _prefs.getBool('launchAtStartup') ?? false;
-    suspendHotkey = _prefs.getString('suspendHotkey') ?? 'Control+Alt+S';
-    
-    final String? jsonConfigs = _prefs.getString('configs');
-    if (jsonConfigs != null) {
-      final Map<String, dynamic> decoded = jsonDecode(jsonConfigs);
-      configs = decoded.map((key, value) => MapEntry(key, CornerConfig.fromJson(value)));
+  Future<void> _load() async {
+    try {
+      final file = _settingsFile;
+      if (!await file.exists()) return;
+
+      final contents = await file.readAsString();
+      final Map<String, dynamic> data = jsonDecode(contents);
+
+      monitorMode = MonitorMode.values[data['monitorMode'] ?? 0];
+      targetDisplayId = data['targetDisplayId'];
+      launchAtStartup = data['launchAtStartup'] ?? false;
+      suspendHotkey = data['suspendHotkey'] ?? 'Control+Alt+S';
+      
+      if (data['configs'] != null) {
+        final Map<String, dynamic> decoded = data['configs'];
+        configs = decoded.map((key, value) => MapEntry(key, CornerConfig.fromJson(value)));
+      }
+    } catch (e) {
+      print("Error loading config: $e");
     }
   }
 
   Future<void> save() async {
-    await _prefs.setInt('monitorMode', monitorMode.index);
-    if (targetDisplayId != null) await _prefs.setString('targetDisplayId', targetDisplayId!);
-    await _prefs.setBool('launchAtStartup', launchAtStartup);
-    if (suspendHotkey != null) await _prefs.setString('suspendHotkey', suspendHotkey!);
-    
-    final String encoded = jsonEncode(configs.map((key, value) => MapEntry(key, value.toJson())));
-    await _prefs.setString('configs', encoded);
+    try {
+      final Map<String, dynamic> data = {
+        'monitorMode': monitorMode.index,
+        'targetDisplayId': targetDisplayId,
+        'launchAtStartup': launchAtStartup,
+        'suspendHotkey': suspendHotkey,
+        'configs': configs.map((key, value) => MapEntry(key, value.toJson())),
+      };
+
+      final String encoded = jsonEncode(data);
+      await _settingsFile.writeAsString(encoded);
+    } catch (e) {
+      print("Error saving config: $e");
+    }
   }
 
   void setSuspended(bool value) {

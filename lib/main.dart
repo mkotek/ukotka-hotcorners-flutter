@@ -16,8 +16,6 @@ void main() async {
   // Initialize Services
   await ConfigService().init();
   await windowManager.ensureInitialized();
-  // hotkey_manager does not need ensureInitialized in most versions, 
-  // but some use waitUntilReady. Let's remove it if it fails.
 
   WindowOptions windowOptions = const WindowOptions(
     size: Size(900, 700),
@@ -70,9 +68,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   }
 
   void _initHotkeys() {
-    // Default hotkey fallback if none saved
-    String keyStr = ConfigService().suspendHotkey ?? 'Control+Alt+S';
-    // Simplified hotkey registration
+    // Simplified hotkey registration - matching version 0.2.3 positional constructor
     HotKey hotKey = HotKey(
       KeyCode.keyS,
       modifiers: [KeyModifier.control, KeyModifier.alt],
@@ -105,7 +101,6 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   Future<void> _updateTray() async {
     final statusText = ConfigService().isSuspended ? " (ZAWIESZONO)" : "";
     await _systemTray.setToolTip("uKotka HotCorners$statusText");
-    // Update menu labels if needed
   }
 
   Future<void> _initSystemTray() async {
@@ -118,12 +113,12 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
       MenuItemLabel(label: 'Ustawienia', onClicked: (menuItem) => windowManager.show()),
       MenuSeparator(),
       SubMenu(label: 'Zawieś działanie', children: [
-        MenuItemLabel(label: 'Na 5 minut', onClicked: (_) => _toggleSuspension(const Duration(minutes: 5))),
-        MenuItemLabel(label: 'Na 30 minut', onClicked: (_) => _toggleSuspension(const Duration(minutes: 30))),
-        MenuItemLabel(label: 'Na 1 godzinę', onClicked: (_) => _toggleSuspension(const Duration(hours: 1))),
-        MenuItemLabel(label: 'Na stałe', onClicked: (_) => _toggleSuspension()),
+        MenuItemLabel(label: 'Na 5 minut', onClicked: (menuItem) => _toggleSuspension(const Duration(minutes: 5))),
+        MenuItemLabel(label: 'Na 30 minut', onClicked: (menuItem) => _toggleSuspension(const Duration(minutes: 30))),
+        MenuItemLabel(label: 'Na 1 godzinę', onClicked: (menuItem) => _toggleSuspension(const Duration(hours: 1))),
+        MenuItemLabel(label: 'Na stałe', onClicked: (menuItem) => _toggleSuspension()),
       ]),
-      MenuItemLabel(label: 'Wznów działanie', onClicked: (_) {
+      MenuItemLabel(label: 'Wznów działanie', onClicked: (menuItem) {
         setState(() => ConfigService().setSuspended(false));
         _updateTray();
       }),

@@ -26,6 +26,7 @@ dependencies:
   flutter_localization: any
   intl: any
   ffi: any
+  path: any
 
 dev_dependencies:
   flutter_test:
