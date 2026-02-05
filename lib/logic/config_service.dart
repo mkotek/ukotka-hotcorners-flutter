@@ -23,7 +23,10 @@ class ConfigService {
   // Settings
   MonitorMode monitorMode = MonitorMode.primaryOnly;
   String? targetDisplayId;
-  Map<String, CornerConfig> configs = {}; // key: displayId_cornerIndex
+  final Map<String, CornerConfig> configs = {}; // key: displayId_cornerIndex
+  
+  bool get hasConfig => configs.isNotEmpty;
+
   bool launchAtStartup = false;
   String? suspendHotkey;
   bool isSuspended = false;

@@ -105,10 +105,17 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   }
 
   Future<void> _initSystemTray() async {
+    String iconPath = Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png';
+    
     await _systemTray.initSystemTray(
       title: "uKotka HotCorners",
-      iconPath: 'windows/runner/resources/app_icon.ico',
+      iconPath: iconPath,
     );
+
+    // Show settings on first launch or if specifically requested
+    if (!ConfigService().hasConfig || ConfigService().launchAtStartup == false) {
+       windowManager.show();
+    }
 
     await _menu.buildFrom([
       MenuItemLabel(label: 'Ustawienia', onClicked: (menuItem) => windowManager.show()),
