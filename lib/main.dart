@@ -74,7 +74,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
     String keyStr = ConfigService().suspendHotkey ?? 'Control+Alt+S';
     // Simplified hotkey registration
     HotKey hotKey = HotKey(
-      KeyCode.keyS,
+      keyCode: KeyCode.keyS,
       modifiers: [KeyModifier.control, KeyModifier.alt],
       scope: HotKeyScope.system,
     );
@@ -109,7 +109,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   }
 
   Future<void> _initSystemTray() async {
-    await _systemTray.initTray(
+    await _systemTray.initSystemTray(
       title: "uKotka HotCorners",
       iconPath: 'windows/runner/resources/app_icon.ico',
     );

@@ -49,13 +49,14 @@ class HotCornerManager {
         final y = pointer.ref.y.toDouble();
 
         final displays = await screenRetriever.getAllDisplays();
+        final primaryDisplay = await screenRetriever.getPrimaryDisplay();
         Display? targetDisplay;
         HotCorner currentCorner = HotCorner.none;
         CornerConfig? activeConfig;
 
         for (final display in displays) {
           // Requirement #1: Monitor exclusion/inclusion logic
-          if (_config.monitorMode == MonitorMode.primaryOnly && !display.isPrimary) continue;
+          if (_config.monitorMode == MonitorMode.primaryOnly && display.id != primaryDisplay.id) continue;
           if (_config.monitorMode == MonitorMode.independent && 
               _config.targetDisplayId != null && 
               _config.targetDisplayId != display.id.toString()) {
