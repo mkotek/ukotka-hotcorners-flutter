@@ -277,7 +277,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SwitchListTile(
           title: Text(AppLocale.startup.getString(context)),
           value: _config.launchAtStartup,
-          activeColor: const Color(0xFF00C2FF),
+          activeTrackColor: const Color(0xFF00C2FF),
           onChanged: (val) {
             setState(() => _config.launchAtStartup = val);
             _config.save();

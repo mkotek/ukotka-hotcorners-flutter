@@ -70,7 +70,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   void _initHotkeys() {
     // Simplified hotkey registration - matching version 0.2.3 positional constructor
     HotKey hotKey = HotKey(
-      key: KeyCode.keyS,
+      key: LogicalKeyboardKey.keyS,
       modifiers: [HotKeyModifier.control, HotKeyModifier.alt],
       scope: HotKeyScope.system,
     );

@@ -50,7 +50,7 @@ class ConfigService {
         configs = decoded.map((key, value) => MapEntry(key, CornerConfig.fromJson(value)));
       }
     } catch (e) {
-      print("Error loading config: $e");
+      // Ignore errors for now or log properly
     }
   }
 
