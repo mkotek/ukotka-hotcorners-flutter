@@ -1,0 +1,34 @@
+﻿Analyzing uKotka-HotCorners...                                  
+
+   info - Don't invoke 'print' in production code - lib\logic\config_service.dart:53:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\logic\config_service.dart:70:7 - avoid_print
+warning - Unused import: 'dart:convert' - lib\logic\localization.dart:1:8 - unused_import
+warning - Unused import: 'package:flutter/services.dart' - lib\logic\localization.dart:2:8 - unused_import
+warning - Unused import: 'package:flutter_localization/flutter_localization.dart' - lib\logic\localization.dart:3:8 - unused_import
+   info - The constant name 'EN' isn't a lowerCamelCase identifier - lib\logic\localization.dart:33:37 - constant_identifier_names
+   info - The constant name 'PL' isn't a lowerCamelCase identifier - lib\logic\localization.dart:62:37 - constant_identifier_names
+  error - The named parameter 'key' is required, but there's no corresponding argument - lib\main.dart:72:21 - missing_required_argument
+   info - 'KeyCode' is deprecated and shouldn't be used. No longer supported, Use `PhysicalKeyboardKey` instead - lib\main.dart:73:7 - deprecated_member_use
+  error - Too many positional arguments: 0 expected, but 1 found - lib\main.dart:73:7 - extra_positional_arguments_could_be_named
+   info - 'KeyModifier' is deprecated and shouldn't be used. No longer supported, Use `HotKeyModifier` instead - lib\main.dart:74:19 - deprecated_member_use
+  error - The element type 'KeyModifier' can't be assigned to the list type 'HotKeyModifier' - lib\main.dart:74:19 - list_element_type_not_assignable
+   info - 'KeyModifier' is deprecated and shouldn't be used. No longer supported, Use `HotKeyModifier` instead - lib\main.dart:74:40 - deprecated_member_use
+  error - The element type 'KeyModifier' can't be assigned to the list type 'HotKeyModifier' - lib\main.dart:74:40 - list_element_type_not_assignable
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\settings_screen.dart:70:11 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\settings_screen.dart:89:13 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\settings_screen.dart:132:31 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\settings_screen.dart:194:23 - deprecated_member_use
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\screens\settings_screen.dart:280:11 - deprecated_member_use
+
+flutter : 19 issues found. (ran in 10.4s)
+At line:1 char:70
++ ... ub_deps.txt; flutter analyze --no-pub >
+ analyze_full.txt 2>&1; cat an ...
++                  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified:  
+   (19 issues found. (ran in 10.4s):String)  
+   [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandE 
+   rror
+ 

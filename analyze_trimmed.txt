@@ -1,0 +1,71 @@
+﻿
+   info - Don't invoke 'print' in productio
+n code - lib\logic\config_service.dart:53:7
+ - avoid_print
+   info - Don't invoke 'print' in productio
+n code - lib\logic\config_service.dart:70:7
+ - avoid_print
+   info - The constant name 'EN' isn't a lo
+werCamelCase identifier - lib\logic\localiz
+ation.dart:33:37 - constant_identifier_name
+s
+   info - The constant name 'PL' isn't a lo
+werCamelCase identifier - lib\logic\localiz
+ation.dart:62:37 - constant_identifier_name
+s
+  error - The named parameter 'key' is requ
+ired, but there's no corresponding argument
+ - lib\main.dart:72:21 - missing_required_a
+rgument
+   info - 'KeyCode' is deprecated and shoul
+dn't be used. No longer supported, Use `Phy
+sicalKeyboardKey` instead - lib\main.dart:7
+3:7 - deprecated_member_use
+  error - Too many positional arguments: 0 
+expected, but 1 found - lib\main.dart:73:7 
+- extra_positional_arguments_could_be_named
+   info - 'KeyModifier' is deprecated and s
+houldn't be used. No longer supported, Use 
+`HotKeyModifier` instead - lib\main.dart:74
+:19 - deprecated_member_use
+  error - The element type 'KeyModifier' ca
+n't be assigned to the list type 'HotKeyMod
+ifier' - lib\main.dart:74:19 - list_element
+_type_not_assignable
+   info - 'KeyModifier' is deprecated and s
+houldn't be used. No longer supported, Use 
+`HotKeyModifier` instead - lib\main.dart:74
+:40 - deprecated_member_use
+  error - The element type 'KeyModifier' ca
+n't be assigned to the list type 'HotKeyMod
+ifier' - lib\main.dart:74:40 - list_element
+_type_not_assignable
+   info - 'value' is deprecated and shouldn
+'t be used. Use initialValue instead. This 
+will set the initial value for the form fie
+ld. This feature was deprecated after v3.33
+.0-1.0.pre - lib\screens\settings_screen.da
+rt:70:11 - deprecated_member_use
+   info - 'value' is deprecated and shouldn
+'t be used. Use initialValue instead. This 
+will set the initial value for the form fie
+ld. This feature was deprecated after v3.33
+.0-1.0.pre - lib\screens\settings_screen.da
+rt:89:13 - deprecated_member_use
+   info - 'withOpacity' is deprecated and s
+houldn't be used. Use .withValues() to avoi
+d precision loss - lib\screens\settings_scr
+een.dart:132:31 - deprecated_member_use
+   info - 'value' is deprecated and shouldn
+'t be used. Use initialValue instead. This 
+will set the initial value for the form fie
+ld. This feature was deprecated after v3.33
+.0-1.0.pre - lib\screens\settings_screen.da
+rt:194:23 - deprecated_member_use
+   info - 'activeColor' is deprecated and s
+houldn't be used. Use activeThumbColor inst
+ead. This feature was deprecated after v3.3
+1.0-2.0.pre - lib\screens\settings_screen.d
+art:280:11 - deprecated_member_use
+
+
