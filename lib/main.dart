@@ -74,7 +74,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
     String keyStr = ConfigService().suspendHotkey ?? 'Control+Alt+S';
     // Simplified hotkey registration
     HotKey hotKey = HotKey(
-      keyCode: KeyCode.keyS,
+      KeyCode.keyS,
       modifiers: [KeyModifier.control, KeyModifier.alt],
       scope: HotKeyScope.system,
     );
@@ -115,7 +115,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
     );
 
     await _menu.buildFrom([
-      MenuItemLabel(label: 'Ustawienia', onClicked: () => windowManager.show()),
+      MenuItemLabel(label: 'Ustawienia', onClicked: (menuItem) => windowManager.show()),
       MenuSeparator(),
       SubMenu(label: 'Zawieś działanie', children: [
         MenuItemLabel(label: 'Na 5 minut', onClicked: (_) => _toggleSuspension(const Duration(minutes: 5))),
@@ -128,7 +128,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
         _updateTray();
       }),
       MenuSeparator(),
-      MenuItemLabel(label: 'Wyjście', onClicked: () => windowManager.close()),
+      MenuItemLabel(label: 'Wyjście', onClicked: (menuItem) => windowManager.close()),
     ]);
 
     await _systemTray.setContextMenu(_menu);
