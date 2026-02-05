@@ -34,14 +34,14 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  window_manager: ^0.4.3
-  screen_retriever: ^0.2.0
-  system_tray: ^2.0.3
-  flutter_lucide: ^1.0.2
-  animations: ^2.1.1
-  win32: ^5.11.0
-  hotkey_manager: ^0.2.3
-  launch_at_startup: ^0.5.1
+  window_manager: any
+  screen_retriever: any
+  system_tray: any
+  flutter_lucide: any
+  animations: any
+  win32: any
+  hotkey_manager: any
+  launch_at_startup: any
   shared_preferences: any
   package_info_plus: any
   url_launcher: any
