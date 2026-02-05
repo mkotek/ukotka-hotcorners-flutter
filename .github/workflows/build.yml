@@ -18,7 +18,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.27.3' # Specific stable version or leave blank for latest
+#          flutter-version: '3.27.3' # Let it use the latest stable channel
           cache: true
 
       - name: Enable Windows support
