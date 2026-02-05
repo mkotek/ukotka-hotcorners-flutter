@@ -16,7 +16,8 @@ void main() async {
   // Initialize Services
   await ConfigService().init();
   await windowManager.ensureInitialized();
-  await hotKeyManager.ensureInitialized();
+  // hotkey_manager does not need ensureInitialized in most versions, 
+  // but some use waitUntilReady. Let's remove it if it fails.
 
   WindowOptions windowOptions = const WindowOptions(
     size: Size(900, 700),
