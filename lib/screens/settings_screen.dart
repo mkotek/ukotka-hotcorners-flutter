@@ -116,68 +116,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildCornerTile(AppLocale.cornerBottomRight.getString(context), 3, LucideIcons.arrow_down_right),
           ],
         ),
-
-// ... inside _showCornerDialog ...
-
-                    Row(
-                      children: [
-                        Expanded(child: Text("Rozmiar: ${tempSize.toInt()}px")),
-                        Expanded(
-                          flex: 2,
-                          child: Slider(
-                            value: tempSize,
-                            min: 1,
-                            max: 100,
-                            onChanged: (v) => setDialogState(() => tempSize = v),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    // PREVIEW VISUALIZATION
-                    const SizedBox(height: 10),
-                    const Text("Podgląd obszaru (względem rogu ekranu):", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    const SizedBox(height: 5),
-                    Container(
-                      width: 150,
-                      height: 150,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E1E1E),
-                        border: Border.all(color: Colors.white24),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Stack(
-                        children: [
-                          // Draw the "active" corner area
-                          Positioned(
-                             // Adjust position based on corner? No, just generic corner preview (top-left defaults)
-                             // Or we could pass 'index' to orientation. 
-                             // For simplicity: Top Left. 
-                            top: 0,
-                            left: 0,
-                            child: Container(
-                              width: tempSize,
-                              height: tempSize,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00C2FF).withOpacity(0.5),
-                                border: Border.all(color: const Color(0xFF00C2FF), width: 1),
-                              ),
-                            ),
-                          ),
-                          // Helper text
-                          Positioned(
-                            bottom: 5,
-                            right: 5,
-                            child: Text("150x150 px canvas", 
-                              style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 9)
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    Row(
       ],
     );
   }
@@ -297,9 +235,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             max: 3000,
                             divisions: 30,
                             onChanged: (v) => setDialogState(() => tempDelay = v.toInt()),
-                          ),
                         ),
                       ],
+                    ),
+                    
+                    // PREVIEW VISUALIZATION
+                    const SizedBox(height: 20),
+                    const Text("Podgląd obszaru aktywnego:", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    const SizedBox(height: 10),
+                    Center(
+                      child: Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          border: Border.all(color: Colors.white24),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              child: Container(
+                                width: tempSize,
+                                height: tempSize,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF00C2FF).withOpacity(0.5),
+                                  border: Border.all(color: const Color(0xFF00C2FF), width: 1),
+                                  borderRadius: const BorderRadius.only(bottomRight: Radius.circular(4)),
+                                ),
+                              ),
+                            ),
+                            const Positioned(
+                              bottom: 8,
+                              right: 8,
+                              child: Text("Symulacja 150x150 px", 
+                                style: TextStyle(color: Colors.white38, fontSize: 10)
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
