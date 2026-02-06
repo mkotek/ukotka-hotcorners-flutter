@@ -8,6 +8,7 @@ import 'package:screen_retriever/screen_retriever.dart';
 import 'action_engine.dart';
 import 'config_service.dart';
 import '../models/corner_config.dart';
+import '../main.dart'; // Import safeLog
 
 enum HotCorner {
   topLeft,
@@ -106,6 +107,7 @@ class HotCornerManager {
         if (currentCorner != HotCorner.none && _discoveryTime != null && activeConfig != null) {
           final elapsed = DateTime.now().difference(_discoveryTime!);
           if (elapsed >= activeConfig.dwellTime) {
+            safeLog('Corner triggered: $currentCorner on Display $targetDisplay');
             ActionEngine.execute(activeConfig);
             // Prevent multiple triggers by resetting discovery time into the future 
             // until the mouse leaves the corner.

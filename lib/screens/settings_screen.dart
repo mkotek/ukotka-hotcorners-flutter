@@ -6,6 +6,7 @@ import 'package:screen_retriever/screen_retriever.dart';
 import '../logic/localization.dart';
 import '../logic/config_service.dart';
 import '../models/corner_config.dart';
+import '../main.dart'; // Import safeLog
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -26,13 +27,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadDisplays() async {
-    final displays = await screenRetriever.getAllDisplays();
-    setState(() {
-      _displays = displays;
-      if (_displays.isNotEmpty) {
-        _selectedDisplayId = _displays.first.id.toString();
+    try {
+      final displays = await screenRetriever.getAllDisplays();
+      final primary = await screenRetriever.getPrimaryDisplay();
+      
+      safeLog('Discovered ${displays.length} displays. Primary ID: ${primary.id}');
+      for (var d in displays) {
+         safeLog(' - Display ID: ${d.id}, Name: ${d.name}, Size: ${d.size}');
       }
-    });
+
+      setState(() {
+        _displays = displays;
+        if (_displays.isNotEmpty && _selectedDisplayId == null) {
+          _selectedDisplayId = _displays.first.id.toString();
+        }
+      });
+    } catch (e, s) {
+      safeLog('Error loading displays: $e\n$s');
+    }
   }
 
   @override
@@ -88,8 +100,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
           DropdownButtonFormField<String>(
             value: _selectedDisplayId,
             decoration: const InputDecoration(border: OutlineInputBorder()),
-            items: _displays.map((d) => DropdownMenuItem(value: d.id.toString(), child: Text(d.name ?? "Monitor ${d.id}"))).toList(),
-            onChanged: (val) => setState(() => _selectedDisplayId = val),
+            items: _displays.map((d) {
+              final isPrimary = d.visiblePosition?.dx == 0 && d.visiblePosition?.dy == 0; // Heuristic for primary if id match fails
+              // Actually screen_retriever doesn't easily expose 'isPrimary' flag on Display objects in the list
+              // but we can try to guess or just show names.
+              String label = d.name ?? "Monitor ${d.id}";
+              if (d.visiblePosition?.dx == 0 && d.visiblePosition?.dy == 0) {
+                label += " (Główny)";
+              }
+              return DropdownMenuItem(value: d.id.toString(), child: Text(label));
+            }).toList(),
+            onChanged: (val) {
+              safeLog('Selected display for config changed to: $val');
+              setState(() => _selectedDisplayId = val);
+            },
           ),
         ],
       ],
@@ -256,15 +280,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Stack(
                           children: [
                             Positioned(
-                              top: 0,
-                              left: 0,
+                              top: (index == 2 || index == 3) ? null : 0,
+                              bottom: (index == 2 || index == 3) ? 0 : null,
+                              left: (index == 1 || index == 3) ? null : 0,
+                              right: (index == 1 || index == 3) ? 0 : null,
                               child: Container(
                                 width: tempSize,
                                 height: tempSize,
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF00C2FF).withOpacity(0.5),
                                   border: Border.all(color: const Color(0xFF00C2FF), width: 1),
-                                  borderRadius: const BorderRadius.only(bottomRight: Radius.circular(4)),
+                                  borderRadius: BorderRadius.only(
+                                    bottomRight: index == 0 ? const Radius.circular(4) : Radius.zero,
+                                    bottomLeft: index == 1 ? const Radius.circular(4) : Radius.zero,
+                                    topRight: index == 2 ? const Radius.circular(4) : Radius.zero,
+                                    topLeft: index == 3 ? const Radius.circular(4) : Radius.zero,
+                                  ),
                                 ),
                               ),
                             ),

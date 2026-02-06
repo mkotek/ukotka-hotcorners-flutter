@@ -1,7 +1,6 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:path/path.dart' as p;
+import 'package:flutter/foundation.dart';
 import '../models/corner_config.dart';
+import '../main.dart'; // Import safeLog
 
 enum MonitorMode {
   primaryOnly,
@@ -38,7 +37,11 @@ class ConfigService {
   Future<void> _load() async {
     try {
       final file = _settingsFile;
-      if (!await file.exists()) return;
+      safeLog('Loading settings from: ${file.path}');
+      if (!await file.exists()) {
+        safeLog('Settings file not found, using defaults');
+        return;
+      }
 
       final contents = await file.readAsString();
       final Map<String, dynamic> data = jsonDecode(contents);
@@ -52,13 +55,15 @@ class ConfigService {
         final Map<String, dynamic> decoded = data['configs'];
         configs = decoded.map((key, value) => MapEntry(key, CornerConfig.fromJson(value)));
       }
-    } catch (e) {
-      // Ignore errors for now or log properly
+      safeLog('Settings loaded successfully. MonitorMode: $monitorMode, Configs: ${configs.length}');
+    } catch (e, s) {
+      safeLog('Error loading settings: $e\n$s');
     }
   }
 
   Future<void> save() async {
     try {
+      safeLog('Saving settings...');
       final Map<String, dynamic> data = {
         'monitorMode': monitorMode.index,
         'targetDisplayId': targetDisplayId,
@@ -69,8 +74,9 @@ class ConfigService {
 
       final String encoded = jsonEncode(data);
       await _settingsFile.writeAsString(encoded);
-    } catch (e) {
-      print("Error saving config: $e");
+      safeLog('Settings saved. LaunchAtStartup: $launchAtStartup');
+    } catch (e, s) {
+      safeLog('Error saving settings: $e\n$s');
     }
   }
 

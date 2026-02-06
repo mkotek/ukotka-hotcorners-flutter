@@ -3,9 +3,11 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 import '../models/corner_config.dart';
+import '../main.dart'; // Import safeLog
 
 class ActionEngine {
   static Future<void> execute(CornerConfig config) async {
+    safeLog('Executing action: ${config.action}');
     switch (config.action) {
       case HotCornerActionType.monitorOff:
         _sendMessage(WM_SYSCOMMAND, SC_MONITORPOWER, 2);
@@ -23,6 +25,7 @@ class ActionEngine {
         break;
       case HotCornerActionType.showDesktop:
         // Toggle Desktop via shell command
+        safeLog('Running PowerShell ToggleDesktop...');
         Process.run('powershell', ['-Command', '(New-Object -ComObject shell.application).ToggleDesktop()']);
         break;
       case HotCornerActionType.actionCenter:
@@ -35,7 +38,10 @@ class ActionEngine {
         break;
       case HotCornerActionType.launchApp:
         if (config.appPath != null) {
+          safeLog('Launching app: ${config.appPath} with args: ${config.appArgs}');
           Process.start(config.appPath!, config.appArgs?.split(' ') ?? []);
+        } else {
+          safeLog('LaunchApp action targeted but appPath is null');
         }
         break;
       case HotCornerActionType.none:

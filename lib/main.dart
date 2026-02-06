@@ -17,8 +17,12 @@ import 'screens/settings_screen.dart';
 // GLOBAL LOGGER
 void safeLog(String message) {
   try {
-    final file = File('${File(Platform.resolvedExecutable).parent.path}\\crash_debug.txt');
-    file.writeAsStringSync('${DateTime.now()}: $message\n', mode: FileMode.append);
+    final exePath = Platform.resolvedExecutable;
+    final exeDir = p.dirname(exePath);
+    final logFile = File(p.join(exeDir, 'crash_debug.txt'));
+    final timestamp = DateTime.now().toString().split('.').first; // Cleaner timestamp
+    logFile.writeAsStringSync('[$timestamp] $message\n', mode: FileMode.append);
+    debugPrint(message); // Also log to console
   } catch (e) {
     // If we can't log, we are doomed, but don't crash
   }
@@ -48,7 +52,8 @@ void main() async {
       windowManager.waitUntilReadyToShow(windowOptions, () async {
         await windowManager.show();
         await windowManager.focus();
-        safeLog('Window shown and focused');
+        await windowManager.setPreventClose(true); // Prevent app exit on X click
+        safeLog('Window shown and focused (Close prevented)');
       });
 
     } catch (e, s) {
@@ -68,7 +73,7 @@ class UKotkaHotCornersApp extends StatefulWidget {
   State<UKotkaHotCornersApp> createState() => _UKotkaHotCornersAppState();
 }
 
-class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
+class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowListener {
   final FlutterLocalization _localization = FlutterLocalization.instance;
   final SystemTray _systemTray = SystemTray();
   final Menu _menu = Menu();
@@ -77,8 +82,24 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   @override
   void initState() {
     super.initState();
-    safeLog('State initState called');
+    windowManager.addListener(this);
+    safeLog('State initState called, WindowListener added');
     _initializeApp();
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  void onWindowClose() async {
+    bool isPreventClose = await windowManager.isPreventClose();
+    if (isPreventClose) {
+      safeLog('Window close intercepted - Hiding to tray');
+      await windowManager.hide();
+    }
   }
 
   Future<void> _initializeApp() async {
@@ -146,42 +167,55 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   }
 
   Future<void> _initSystemTray() async {
-    String iconPath = "";
-    
     try {
-      // STRATEGY: Extract icon from Asset Bundle to Temp File
-      // This is the "Nuclear Option" that guarantees a physical file exists
-      final Directory tempDir = Directory.systemTemp;
-      final File tempIcon = File('${tempDir.path}/ukotka_tray_icon.ico');
+      safeLog('Starting _initSystemTray...');
       
-      // Always write to ensure it exists
+      // Use join for robust path handling
+      final String tempPath = p.join(Directory.systemTemp.path, 'ukotka_tray_icon.ico');
+      final File tempIcon = File(tempPath);
+      
+      safeLog('Loading asset app_icon.ico...');
       final ByteData data = await rootBundle.load('assets/app_icon.ico');
       final List<int> bytes = data.buffer.asUint8List();
+      
+      safeLog('Writing icon to temp: $tempPath');
       await tempIcon.writeAsBytes(bytes, flush: true);
       
-      iconPath = tempIcon.path;
-      safeLog('Icon extracted to temp: $iconPath');
+      if (!await tempIcon.exists()) {
+        throw Exception("Failed to create temp icon file");
+      }
 
+      safeLog('Calling _systemTray.initSystemTray...');
       await _systemTray.initSystemTray(
         title: "uKotka HotCorners",
-        iconPath: iconPath,
+        iconPath: tempPath,
       );
       
+      safeLog('Building tray menu...');
       await _menu.buildFrom([
-        MenuItemLabel(label: 'Pokaż', onClicked: (menuItem) => windowManager.show()),
-        MenuItemLabel(label: 'Zamknij', onClicked: (menuItem) => windowManager.close()),
+        MenuItemLabel(label: 'Pokaż', onClicked: (menuItem) {
+          safeLog('Tray Menu: Show clicked');
+          windowManager.show();
+        }),
+        MenuItemLabel(label: 'Zamknij', onClicked: (menuItem) {
+          safeLog('Tray Menu: Close clicked - Exiting app');
+          windowManager.destroy(); // Force exit
+        }),
       ]);
       await _systemTray.setContextMenu(_menu);
       
       _systemTray.registerSystemTrayEventHandler((eventName) {
+        safeLog('SystemTray Event: $eventName');
         if (eventName == kSystemTrayEventClick) {
           windowManager.show();
         } else if (eventName == kSystemTrayEventRightClick) {
           _systemTray.popUpContextMenu();
         }
       });
-    } catch (e) {
-      safeLog('Tray Init Failed (Final Attempt): $e');
+      
+      safeLog('SystemTray successfully initialized');
+    } catch (e, s) {
+      safeLog('Tray Init Failed: $e\n$s');
     }
   }
 
