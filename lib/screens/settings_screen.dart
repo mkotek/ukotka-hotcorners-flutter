@@ -460,7 +460,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           ],
         ),
         const SizedBox(height: 12),
-        const Text('Wersja 1.1.0'),
+        const Text('Wersja 1.2.1'),
         const SizedBox(height: 12),
         const Text('Prosta i wydajna aplikacja do obsługi gorących narożników na Windows.'),
         const SizedBox(height: 16),
@@ -512,6 +512,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       case HotCornerActionType.snippingTool: return "Wycinanie i szkic (Win+Shift+S)";
       case HotCornerActionType.taskManager: return "Menedżer zadań (Ctrl+Shift+Esc)";
       case HotCornerActionType.commandPalette: return "Paleta poleceń (Win+Alt+Space)";
+      case HotCornerActionType.lockWorkstation: return "Zablokuj komputer (Win+L)";
     }
   }
 

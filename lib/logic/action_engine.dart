@@ -70,6 +70,10 @@ class ActionEngine {
         // Win + Alt + Space
         _sendKeyCombo([VK_LWIN, VK_LMENU, VK_SPACE]);
         break;
+      case HotCornerActionType.lockWorkstation:
+        safeLog('Locking workstation...');
+        LockWorkStation();
+        break;
       case HotCornerActionType.none:
         break;
     }
