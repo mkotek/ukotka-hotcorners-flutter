@@ -196,6 +196,34 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
     }
   }
 
+  Future<void> _updateTrayMenu() async {
+    try {
+      final isVisible = await windowManager.isVisible();
+      final config = ConfigService();
+      
+      List<MenuItem> items = [
+        MenuItem(
+          key: 'toggle_window', 
+          label: isVisible ? 'Ukryj okno' : 'Pokaż okno'
+        ),
+        MenuItem.separator(),
+        MenuItem(
+          key: 'toggle_suspend', 
+          label: config.isSuspended ? 'Wznów działanie' : 'Zawieś działanie'
+        ),
+        MenuItem(
+          key: 'snooze_30', 
+          label: 'Wyłącz na 30 min'
+        ),
+        MenuItem.separator(),
+        MenuItem(key: 'exit', label: 'Zamknij aplikację'),
+      ];
+      await trayManager.setContextMenu(Menu(items: items));
+    } catch (e) {
+      safeLog('Failed to update tray menu: $e');
+    }
+  }
+
   Future<void> _initSystemTray() async {
     try {
       safeLog('Starting _initSystemTray (tray_manager)...');
@@ -208,13 +236,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
       await tempIcon.writeAsBytes(bytes, flush: true);
       
       await trayManager.setIcon(iconPath);
-      
-      List<MenuItem> items = [
-        MenuItem(key: 'show', label: 'Pokaż'),
-        MenuItem.separator(),
-        MenuItem(key: 'exit', label: 'Zamknij'),
-      ];
-      await trayManager.setContextMenu(Menu(items: items));
+      await _updateTrayMenu();
       await trayManager.setToolTip('uKotka HotCorners');
       
       safeLog('SystemTray (tray_manager) successfully initialized');
@@ -224,9 +246,12 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
   }
 
   @override
-  void onTrayIconMouseDown() {
-    safeLog('Tray Icon Clicked');
-    windowManager.show();
+  void onTrayIconMouseDown() async {
+    safeLog('Tray Icon Clicked - Force restoring window');
+    await windowManager.setSkipTaskbar(false);
+    await windowManager.show();
+    await windowManager.focus();
+    _updateTrayMenu();
   }
 
   @override
@@ -235,14 +260,29 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
   }
 
   @override
-  void onTrayMenuItemClick(MenuItem menuItem) {
-    if (menuItem.key == 'show') {
-      safeLog('Tray Menu: Show');
-      windowManager.show();
+  void onTrayMenuItemClick(MenuItem menuItem) async {
+    final config = ConfigService();
+    if (menuItem.key == 'toggle_window') {
+      if (await windowManager.isVisible()) {
+        await windowManager.hide();
+        await windowManager.setSkipTaskbar(true);
+      } else {
+        await windowManager.setSkipTaskbar(false);
+        await windowManager.show();
+        await windowManager.focus();
+      }
+    } else if (menuItem.key == 'toggle_suspend') {
+      config.isSuspended = !config.isSuspended;
+      safeLog('Tray: Toggle Suspend -> ${config.isSuspended}');
+    } else if (menuItem.key == 'snooze_30') {
+      config.snoozeUntil = DateTime.now().add(const Duration(minutes: 30));
+      safeLog('Tray: Snooze for 30m');
     } else if (menuItem.key == 'exit') {
       safeLog('Tray Menu: Exit');
       windowManager.destroy();
     }
+    _updateTrayMenu();
+    setState(() {}); // Update UI if open
   }
 
   @override

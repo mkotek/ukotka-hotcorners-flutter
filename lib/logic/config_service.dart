@@ -32,8 +32,13 @@ class ConfigService {
   bool launchAtStartup = false;
   String? suspendHotkey;
   bool isSuspended = false;
+  DateTime? snoozeUntil;
 
-  Future<void> init() async {
+  bool get effectivelySuspended {
+    if (isSuspended) return true;
+    if (snoozeUntil != null && DateTime.now().isBefore(snoozeUntil!)) return true;
+    return false;
+  }
     await _load();
   }
 

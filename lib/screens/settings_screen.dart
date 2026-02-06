@@ -364,20 +364,128 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
         const SizedBox(height: 16),
-        const Text("Skróty klawiszowe", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text("Skróty i zawieszanie", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         ListTile(
           leading: const Icon(LucideIcons.keyboard, color: Color(0xFF00C2FF)),
-          title: const Text("Zawieś/Wznów aplikację"),
-          subtitle: Text("Obecny skrót: ${_config.suspendHotkey ?? 'Control+Alt+S'}"),
-          onTap: () {
-            // Future: Implement hotkey changer dialog
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Możliwość zmiany skrótu zostanie dodana wkrótce!"))
-            );
-          },
+          title: const Text("Zmień skrót zawieszania"),
+          subtitle: Text("Obecny: ${_config.suspendHotkey ?? 'Control+Alt+S'}"),
+          onTap: () => _showHotkeyChanger(),
+        ),
+        const SizedBox(height: 8),
+        const Text("Snooze (Tymczasowe uśpienie)", style: TextStyle(fontSize: 14, color: Colors.grey)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildSnoozeButton("5 min", 5),
+            _buildSnoozeButton("15 min", 15),
+            _buildSnoozeButton("30 min", 30),
+            _buildSnoozeButton("60 min", 60),
+            _buildSnoozeButton("Reset", 0),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _buildSnoozeButton(String label, int minutes) {
+    bool isActive = _config.snoozeUntil != null && 
+                    _config.snoozeUntil!.isAfter(DateTime.now());
+    
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          if (minutes == 0) {
+            _config.snoozeUntil = null;
+          } else {
+            _config.snoozeUntil = DateTime.now().add(Duration(minutes: minutes));
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Aplikacja uśpiona na $minutes min"))
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isActive ? Colors.blueGrey : null,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+      child: Text(label),
+    );
+  }
+
+  void _showHotkeyChanger() {
+    String currentKeys = "";
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return RawKeyboardListener(
+              focusNode: FocusNode()..requestFocus(),
+              onKey: (RawKeyEvent event) {
+                if (event is RawKeyDownEvent) {
+                  final keys = <String>{};
+                  if (event.isControlPressed) keys.add("Control");
+                  if (event.isAltPressed) keys.add("Alt");
+                  if (event.isShiftPressed) keys.add("Shift");
+                  
+                  final keyLabel = event.logicalKey.keyLabel;
+                  if (keyLabel != "Control" && keyLabel != "Alt" && keyLabel != "Shift") {
+                    keys.add(keyLabel);
+                  }
+                  
+                  if (keys.isNotEmpty) {
+                    setDialogState(() {
+                      currentKeys = keys.join("+");
+                    });
+                  }
+                }
+              },
+              child: AlertDialog(
+                title: const Text("Ustaw nowy skrót"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("Naciśnij kombinację klawiszy (np. Ctrl+Alt+S)"),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.blue),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        currentKeys.isEmpty ? "Czekam na klawisze..." : currentKeys,
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Anuluj"),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      if (currentKeys.isNotEmpty) {
+                        setState(() {
+                          _config.suspendHotkey = currentKeys;
+                          _config.save();
+                        });
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: const Text("Zapisz"),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

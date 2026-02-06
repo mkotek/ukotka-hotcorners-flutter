@@ -41,7 +41,7 @@ class HotCornerManager {
   }
 
   Future<void> _checkMousePosition() async {
-    if (_config.isSuspended) return;
+    if (_config.effectivelySuspended) return;
 
     final pointer = calloc<POINT>();
     try {
