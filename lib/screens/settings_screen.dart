@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -28,6 +29,17 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadDisplays();
+    _loadVersion();
+  }
+
+  String _appVersion = "1.0.0"; // Default fallback
+
+  Future<void> _loadVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = info.version;
+    });
+  }
   }
 
   @override
@@ -518,7 +530,9 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           ],
         ),
         const SizedBox(height: 12),
-        const Text('Wersja 1.3.0'),
+        const SizedBox(height: 12),
+        Text('Wersja $_appVersion'),
+        const SizedBox(height: 12),
         const SizedBox(height: 12),
         const Text('Prosta i wydajna aplikacja do obsługi gorących narożników na Windows.'),
         const SizedBox(height: 16),

@@ -89,14 +89,15 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "ukotka_hot_corners" "\0"
+            VALUE "CompanyName", "u Kotka" "\0"
+            VALUE "FileDescription", "uKotka HotCorners" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "ukotka_hot_corners" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 u Kotka. All rights reserved." "\0"
             VALUE "OriginalFilename", "ukotka_hot_corners.exe" "\0"
-            VALUE "ProductName", "ukotka_hot_corners" "\0"
+            VALUE "ProductName", "uKotka HotCorners" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
+            VALUE "Support", "ukotka.com" "\0"
         END
     END
     BLOCK "VarFileInfo"
