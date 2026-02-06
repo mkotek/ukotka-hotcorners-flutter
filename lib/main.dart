@@ -101,11 +101,79 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
 
   @override
   void onWindowClose() async {
-    bool isPreventClose = await windowManager.isPreventClose();
-    if (isPreventClose) {
-      safeLog('Window close intercepted - Hiding to tray');
-      await windowManager.hide();
+    final config = ConfigService();
+    if (config.dontAskExit) {
+      if (config.minimizeOnClose) {
+        safeLog('Auto-hiding to tray (dontAskExit: true)');
+        await windowManager.hide();
+        await windowManager.setSkipTaskbar(true);
+      } else {
+        safeLog('Auto-destroying (dontAskExit: true)');
+        await windowManager.destroy();
+      }
+      return;
     }
+
+    _showExitDialog();
+  }
+
+  void _showExitDialog() {
+    bool dontAskAgain = false;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Zamknij uKotka-HotCorners"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Czy chcesz całkowicie zamknąć aplikację, czy tylko schować ją do paska zadań (tray)?"),
+                  const SizedBox(height: 16),
+                  CheckboxListTile(
+                    title: const Text("Nie pytaj ponownie"),
+                    value: dontAskAgain,
+                    activeColor: const Color(0xFF00C2FF),
+                    onChanged: (val) => setState(() => dontAskAgain = val!),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    final config = ConfigService();
+                    config.dontAskExit = dontAskAgain;
+                    config.minimizeOnClose = true;
+                    await config.save();
+                    Navigator.pop(context);
+                    await windowManager.hide();
+                    await windowManager.setSkipTaskbar(true);
+                    safeLog('User chose: Minimize to tray');
+                  },
+                  child: const Text("Schowaj do traya"),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final config = ConfigService();
+                    config.dontAskExit = dontAskAgain;
+                    config.minimizeOnClose = false;
+                    await config.save();
+                    Navigator.pop(context);
+                    await windowManager.destroy();
+                    safeLog('User chose: Exit app');
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red.withOpacity(0.8)),
+                  child: const Text("Zamknij aplikację"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _initializeApp() async {

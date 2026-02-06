@@ -33,6 +33,8 @@ class ConfigService {
   String? suspendHotkey;
   bool isSuspended = false;
   DateTime? snoozeUntil;
+  bool minimizeOnClose = true;
+  bool dontAskExit = false;
 
   bool get effectivelySuspended {
     if (isSuspended) return true;
@@ -58,6 +60,8 @@ class ConfigService {
       targetDisplayId = data['targetDisplayId'];
       launchAtStartup = data['launchAtStartup'] ?? false;
       suspendHotkey = data['suspendHotkey'] ?? 'Control+Alt+S';
+      minimizeOnClose = data['minimizeOnClose'] ?? true;
+      dontAskExit = data['dontAskExit'] ?? false;
       
       if (data['configs'] != null) {
         final Map<String, dynamic> decoded = data['configs'];
@@ -77,6 +81,8 @@ class ConfigService {
         'targetDisplayId': targetDisplayId,
         'launchAtStartup': launchAtStartup,
         'suspendHotkey': suspendHotkey,
+        'minimizeOnClose': minimizeOnClose,
+        'dontAskExit': dontAskExit,
         'configs': configs.map((key, value) => MapEntry(key, value.toJson())),
       };
 

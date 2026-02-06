@@ -11,6 +11,8 @@ enum HotCornerActionType {
   appSwitcher,
   powerToysRun,
   settings,
+  snippingTool,
+  taskManager,
 }
 
 class CornerConfig {

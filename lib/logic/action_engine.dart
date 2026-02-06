@@ -58,6 +58,14 @@ class ActionEngine {
         // Win + I
         _sendKeyCombo([VK_LWIN, 0x49]); // 'I'
         break;
+      case HotCornerActionType.snippingTool:
+        // Win + Shift + S
+        _sendKeyCombo([VK_LWIN, VK_LSHIFT, 0x53]); // 'S'
+        break;
+      case HotCornerActionType.taskManager:
+        // Ctrl + Shift + Esc
+        _sendKeyCombo([VK_LCONTROL, VK_LSHIFT, VK_ESCAPE]);
+        break;
       case HotCornerActionType.none:
         break;
     }

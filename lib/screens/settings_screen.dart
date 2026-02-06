@@ -205,6 +205,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       case HotCornerActionType.appSwitcher: return "Przełącznik okien (Alt+Tab)";
       case HotCornerActionType.powerToysRun: return "PowerToys Run (Alt+Space)";
       case HotCornerActionType.settings: return "Ustawienia Windows (Win+I)";
+      case HotCornerActionType.snippingTool: return "Wycinanie i szkic (Win+Shift+S)";
+      case HotCornerActionType.taskManager: return "Menedżer zadań (Ctrl+Shift+Esc)";
     }
   }
 
@@ -363,6 +365,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           activeTrackColor: const Color(0xFF00C2FF),
           onChanged: (val) {
             setState(() => _config.launchAtStartup = val);
+            _config.save();
+          },
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          title: const Text("Zamykaj do traya (paska zadań)"),
+          subtitle: const Text("Jeśli wyłączone, X całkowicie zamknie aplikację"),
+          value: _config.minimizeOnClose,
+          activeTrackColor: const Color(0xFF00C2FF),
+          onChanged: (val) {
+            setState(() => _config.minimizeOnClose = val);
+            _config.save();
+          },
+        ),
+        SwitchListTile(
+          title: const Text("Pytaj o akcję przy zamknięciu"),
+          subtitle: const Text("Pokazuje wybór: Zamknij vs Tray"),
+          value: !_config.dontAskExit,
+          activeTrackColor: const Color(0xFF00C2FF),
+          onChanged: (val) {
+            setState(() => _config.dontAskExit = !val);
             _config.save();
           },
         ),
