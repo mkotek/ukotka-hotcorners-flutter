@@ -36,7 +36,7 @@ void main() async {
       // STANDARD WINDOW CONFIGURATION (Debug/Safe Mode)
       // Opaque, standard title bar to ensure visibility
       WindowOptions windowOptions = const WindowOptions(
-        size: Size(900, 700),
+        size: Size(1000, 800),
         center: true,
         backgroundColor: Colors.white,
         skipTaskbar: false,
@@ -179,7 +179,12 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
     if (_statusMessage == "Ready") {
       return MaterialApp(
         supportedLocales: _localization.supportedLocales,
-        localizationsDelegates: _localization.localizationsDelegates,
+        localizationsDelegates: [
+          ..._localization.localizationsDelegates,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         debugShowCheckedModeBanner: false,
         title: 'uKotka HotCorners',
         theme: ThemeData(

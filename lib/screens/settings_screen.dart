@@ -106,9 +106,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          childAspectRatio: 2.5,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
+          childAspectRatio: 3.0, // Shorter buttons
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
           children: [
             _buildCornerTile(AppLocale.cornerTopLeft.getString(context), 0, LucideIcons.arrow_up_left),
             _buildCornerTile(AppLocale.cornerTopRight.getString(context), 1, LucideIcons.arrow_up_right),
@@ -116,6 +116,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildCornerTile(AppLocale.cornerBottomRight.getString(context), 3, LucideIcons.arrow_down_right),
           ],
         ),
+
+// ... inside _showCornerDialog ...
+
+                    Row(
+                      children: [
+                        Expanded(child: Text("Rozmiar: ${tempSize.toInt()}px")),
+                        Expanded(
+                          flex: 2,
+                          child: Slider(
+                            value: tempSize,
+                            min: 1,
+                            max: 100,
+                            onChanged: (v) => setDialogState(() => tempSize = v),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    // PREVIEW VISUALIZATION
+                    const SizedBox(height: 10),
+                    const Text("Podgląd obszaru (względem rogu ekranu):", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    const SizedBox(height: 5),
+                    Container(
+                      width: 150,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        border: Border.all(color: Colors.white24),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Draw the "active" corner area
+                          Positioned(
+                             // Adjust position based on corner? No, just generic corner preview (top-left defaults)
+                             // Or we could pass 'index' to orientation. 
+                             // For simplicity: Top Left. 
+                            top: 0,
+                            left: 0,
+                            child: Container(
+                              width: tempSize,
+                              height: tempSize,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00C2FF).withOpacity(0.5),
+                                border: Border.all(color: const Color(0xFF00C2FF), width: 1),
+                              ),
+                            ),
+                          ),
+                          // Helper text
+                          Positioned(
+                            bottom: 5,
+                            right: 5,
+                            child: Text("150x150 px canvas", 
+                              style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 9)
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    Row(
       ],
     );
   }
