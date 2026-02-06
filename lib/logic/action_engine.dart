@@ -46,6 +46,18 @@ class ActionEngine {
           safeLog('LaunchApp action targeted but appPath is null');
         }
         break;
+      case HotCornerActionType.appSwitcher:
+        // Alt + Tab
+        _sendKeyCombo([VK_LMENU, VK_TAB]);
+        break;
+      case HotCornerActionType.powerToysRun:
+        // Alt + Space
+        _sendKeyCombo([VK_LMENU, VK_SPACE]);
+        break;
+      case HotCornerActionType.settings:
+        // Win + I
+        _sendKeyCombo([VK_LWIN, 0x49]); // 'I'
+        break;
       case HotCornerActionType.none:
         break;
     }

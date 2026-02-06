@@ -202,6 +202,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       case HotCornerActionType.actionCenter: return AppLocale.actionActionCenter.getString(context);
       case HotCornerActionType.aeroShake: return AppLocale.actionAeroShake.getString(context);
       case HotCornerActionType.launchApp: return AppLocale.actionLaunchApp.getString(context);
+      case HotCornerActionType.appSwitcher: return "Przełącznik okien (Alt+Tab)";
+      case HotCornerActionType.powerToysRun: return "PowerToys Run (Alt+Space)";
+      case HotCornerActionType.settings: return "Ustawienia Windows (Win+I)";
     }
   }
 

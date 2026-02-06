@@ -8,6 +8,9 @@ enum HotCornerActionType {
   actionCenter,
   aeroShake,
   launchApp,
+  appSwitcher,
+  powerToysRun,
+  settings,
 }
 
 class CornerConfig {
