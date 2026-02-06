@@ -3,7 +3,7 @@ import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 
 class Win32Utils {
-  /// Returns a map of GDI Name (e.g. \\.\DISPLAY1) to Friendly Name (e.g. Dell U2515H)
+  /// Returns a map of GDI Name (e.g. \\.\DISPLAY1) to Friendly Name (e.g. DELL U2515H)
   static Map<String, String> getMonitorFriendlyNames() {
     final Map<String, String> names = {};
     
@@ -13,7 +13,7 @@ class Win32Utils {
     try {
       int i = 0;
       while (EnumDisplayDevices(nullptr, i, adapter, 0) != 0) {
-        final deviceName = adapter.ref.DeviceName; // e.g. \\.\DISPLAY1
+        final deviceName = adapter.ref.DeviceName;
         final lpDeviceName = deviceName.toNativeUtf16();
         
         try {
@@ -24,17 +24,15 @@ class Win32Utils {
             String monitorString = monitor.ref.DeviceString;
             final deviceId = monitor.ref.DeviceID;
             
-            // Try to extract a hardware-specific ID segment if name is generic
-            if (deviceId.isNotEmpty && (monitorString.isEmpty || monitorString.contains("Generic") || monitorString.contains("Standardowy") || monitorString.contains("PnP"))) {
+            // Extract model name from DeviceID (e.g. MONITOR\GSM3407\...)
+            if (deviceId.isNotEmpty) {
                  final parts = deviceId.split('\\');
-                 if (parts.length > 1) {
-                   // Often parts[1] is the model code, e.g. "SKG3407"
-                   monitorString = parts[1];
+                 if (parts.length > 1 && (monitorString.contains("Generic") || monitorString.contains("Standardowy") || monitorString.isEmpty)) {
+                   monitorString = parts[1]; // Often the hardware model string
                  }
             }
             
-            // Do NOT store the GDI name as the friendly name
-            if (monitorString.isNotEmpty && monitorString != deviceName) {
+            if (monitorString.isNotEmpty) {
               names[deviceName] = monitorString;
             }
           }
@@ -51,13 +49,30 @@ class Win32Utils {
     return names;
   }
 
+  /// Returns a display index (1, 2, 3...) based on GDI name
+  static int getDisplayNumber(String displayId) {
+    // Usually \\.\DISPLAY1 -> 1
+    final RegExp regExp = RegExp(r'DISPLAY(\d+)');
+    final match = regExp.firstMatch(displayId);
+    if (match != null) {
+      return int.tryParse(match.group(1) ?? "0") ?? 0;
+    }
+    return 0;
+  }
+
   static String getFriendlyNameForDisplay(String displayId) {
     try {
-      // Per user request: simplify to just "DISPLAY X"
-      if (displayId.startsWith(r'\\.\')) {
-        return displayId.substring(4); // e.g. "DISPLAY3"
+      final names = getMonitorFriendlyNames();
+      final friendlyName = names[displayId] ?? "";
+      final displayNum = getDisplayNumber(displayId);
+      
+      final label = "Wyświetlacz $displayNum";
+      
+      if (friendlyName.isEmpty || friendlyName == displayId) {
+        return label;
       }
-      return displayId;
+      
+      return "$label: $friendlyName";
     } catch (_) {
       return displayId;
     }

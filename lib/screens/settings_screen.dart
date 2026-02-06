@@ -41,7 +41,15 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       final displays = await screenRetriever.getAllDisplays();
       final primary = await screenRetriever.getPrimaryDisplay();
       
-      safeLog('Discovered ${displays.length} displays. Primary ID: ${primary.id}');
+      // Sort displays by physical position: left-to-right, then top-to-bottom
+      displays.sort((a, b) {
+        final posA = a.visiblePosition ?? const Offset(0, 0);
+        final posB = b.visiblePosition ?? const Offset(0, 0);
+        if (posA.dx != posB.dx) return posA.dx.compareTo(posB.dx);
+        return posA.dy.compareTo(posB.dy);
+      });
+
+      safeLog('Discovered ${displays.length} displays. Priority Order: ${displays.map((e) => e.id).toList()}');
       
       setState(() {
         _displays = displays;
@@ -110,6 +118,125 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     );
   }
 
+  Widget _buildMonitorMap() {
+    if (_displays.isEmpty) return const SizedBox();
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text("Układ wyświetlaczy", style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 20),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate bounding box of all displays
+              double minX = double.infinity;
+              double minY = double.infinity;
+              double maxX = -double.infinity;
+              double maxY = -double.infinity;
+
+              for (var d in _displays) {
+                final pos = d.visiblePosition ?? Offset.zero;
+                final size = d.size ?? Size.zero;
+                if (pos.dx < minX) minX = pos.dx;
+                if (pos.dy < minY) minY = pos.dy;
+                if (pos.dx + size.width > maxX) maxX = pos.dx + size.width;
+                if (pos.dy + size.height > maxY) maxY = pos.dy + size.height;
+              }
+
+              final totalWidth = maxX - minX;
+              final totalHeight = maxY - minY;
+              
+              // Scale factor to fit width but keep aspect ratio
+              final double scale = (constraints.maxWidth - 40) / totalWidth;
+              final double mapHeight = totalHeight * scale;
+
+              return SizedBox(
+                width: constraints.maxWidth,
+                height: mapHeight + 20,
+                child: Stack(
+                  children: _displays.map((d) {
+                    final pos = d.visiblePosition ?? Offset.zero;
+                    final size = d.size ?? Size.zero;
+                    final isSelected = d.id.toString() == _selectedDisplayId;
+                    final displayNum = Win32Utils.getDisplayNumber(d.id.toString());
+
+                    return Positioned(
+                      left: (pos.dx - minX) * scale,
+                      top: (pos.dy - minY) * scale,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedDisplayId = d.id.toString()),
+                        child: Container(
+                          width: size.width * scale,
+                          height: size.height * scale,
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFF107C10) : Colors.white12,
+                            border: Border.all(
+                              color: isSelected ? Colors.greenAccent : Colors.white24,
+                              width: 1.5,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Text(
+                                  displayNum.toString(),
+                                  style: TextStyle(
+                                    fontSize: 24 * (size.height / 1080), 
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              // Corner Indicators
+                              ...List.generate(4, (index) {
+                                final key = "${d.id}_$index";
+                                final hasAction = _config.configs[key]?.action != HotCornerActionType.none;
+                                if (!hasAction) return const SizedBox();
+                                
+                                // Color logic based on action (simplified colors)
+                                Color cornerColor = Colors.yellow;
+                                final action = _config.configs[key]?.action;
+                                if (action == HotCornerActionType.showDesktop) cornerColor = Colors.blueAccent;
+                                if (action == HotCornerActionType.lockWorkstation) cornerColor = Colors.redAccent;
+                                if (action == HotCornerActionType.taskView) cornerColor = Colors.orangeAccent;
+
+                                return Positioned(
+                                  left: (index == 0 || index == 2) ? 2 : null,
+                                  right: (index == 1 || index == 3) ? 2 : null,
+                                  top: (index == 0 || index == 1) ? 2 : null,
+                                  bottom: (index == 2 || index == 3) ? 2 : null,
+                                  child: Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: cornerColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
   Widget _buildMonitorSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +260,9 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
         ),
         if (_config.monitorMode == MonitorMode.independent && _displays.length > 1) ...[
           const SizedBox(height: 16),
-          const Text("Aktywne ustawienia dla monitora:"),
+          _buildMonitorMap(), // ADDED: Visual Monitor Map
+          const SizedBox(height: 24),
+          const Text("Aktywne ustawienia dla wyświetlacza:"),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _selectedDisplayId,
@@ -150,7 +279,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 label += " [Główny]";
               }
               if (d.size != null) {
-                label += " - ${d.size.width.toInt()}x${d.size.height.toInt()}";
+                label += " (${d.size.width.toInt()}x${d.size.height.toInt()})";
               }
 
               return DropdownMenuItem(
