@@ -176,27 +176,46 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
 
   @override
   Widget build(BuildContext context) {
-    safeLog('Building UI');
+    // If ready, show the actual app!
+    if (_statusMessage == "Ready") {
+      return MaterialApp(
+        supportedLocales: _localization.supportedLocales,
+        localizationsDelegates: _localization.localizationsDelegates,
+        debugShowCheckedModeBanner: false,
+        title: 'uKotka HotCorners',
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: const Color(0xFF0F0F0F),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF00C2FF),
+            brightness: Brightness.dark,
+            primary: const Color(0xFF00C2FF),
+          ),
+          useMaterial3: true,
+        ),
+        home: const SettingsScreen(),
+      );
+    }
+    
+    // Otherwise show the Debug/Loading Safe Screen
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        appBar: AppBar(title: const Text("uKotka Debug Mode")),
+        backgroundColor: Colors.white,
+        appBar: AppBar(title: const Text("uKotka Loader")),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.bug_report, size: 64, color: Colors.orange),
+              const Icon(Icons.build_circle, size: 64, color: Colors.blue),
               const SizedBox(height: 20),
-              Text("Status: $_statusMessage"),
+              Text("Status: $_statusMessage", style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => windowManager.close(),
-                child: const Text("Zamknij (Force Exit)"),
-              ),
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("Check crash_debug.txt for logs"),
-              )
+              if (_statusMessage.startsWith("Error"))
+                ElevatedButton(
+                  onPressed: () => windowManager.close(),
+                  child: const Text("Zamknij"),
+                ),
             ],
           ),
         ),
