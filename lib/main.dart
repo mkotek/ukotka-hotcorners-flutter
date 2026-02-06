@@ -87,18 +87,22 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
       safeLog('Localization Init...');
       await _initLocalization();
       
-      safeLog('SystemTray Init...');
-      await _initSystemTray();
-      
-      safeLog('HotKeys Init...');
-      _initHotkeys();
-      
       safeLog('HotCorners Start...');
       HotCornerManager().start();
       
       setState(() {
         _statusMessage = "Ready";
       });
+      
+      // Defer Tray Init until after UI is built and potentially window is shown
+      // This is a race condition fix for HWND availability
+      Future.delayed(const Duration(seconds: 1), () async {
+         safeLog('Delayed SystemTray Init...');
+         await _initSystemTray();
+      });
+
+    } catch (e, s) {
+      safeLog('APP INITIALIZATION FAILED: $e\n$s');
     } catch (e, s) {
       safeLog('APP INITIALIZATION FAILED: $e\n$s');
       setState(() {
@@ -147,6 +151,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
       iconPath = '$exeDir\\data\\flutter_assets\\assets\\app_icon.ico';
     }
     
+    // Validate ICO header briefly? No, just trust file exists for now.
     safeLog('Tray Icon Path: $iconPath (Exists: ${File(iconPath).existsSync()})');
 
     try {
