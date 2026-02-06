@@ -149,7 +149,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final config = _config.configs[key] ?? CornerConfig();
 
     return InkWell(
-      onTap: () => _showCornerDialog(label, key, config),
+      onTap: () => _showCornerDialog(label, key, config, index),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
@@ -196,7 +196,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _showCornerDialog(String label, String key, CornerConfig config) {
+  void _showCornerDialog(String label, String key, CornerConfig config, int index) {
     showDialog(
       context: context,
       builder: (context) {
