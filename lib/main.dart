@@ -146,24 +146,22 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   }
 
   Future<void> _initSystemTray() async {
-    // Attempt to locate the bundled asset icon
-    String iconPath = p.join(
-      p.dirname(Platform.resolvedExecutable),
-      'data',
-      'flutter_assets',
-      'assets',
-      'app_icon.ico',
-    );
-
-    safeLog('Calculated Asset Path: $iconPath');
-
-    if (!File(iconPath).existsSync()) {
-      safeLog('WARNING: Icon file not found at calculated path.');
-      // Fallback: try relative valid path in dev environment? 
-      // Or just try the executable as last resort (though we know it fails)
-    }
-
+    String iconPath = "";
+    
     try {
+      // STRATEGY: Extract icon from Asset Bundle to Temp File
+      // This is the "Nuclear Option" that guarantees a physical file exists
+      final Directory tempDir = Directory.systemTemp;
+      final File tempIcon = File('${tempDir.path}/ukotka_tray_icon.ico');
+      
+      // Always write to ensure it exists
+      final ByteData data = await rootBundle.load('assets/app_icon.ico');
+      final List<int> bytes = data.buffer.asUint8List();
+      await tempIcon.writeAsBytes(bytes, flush: true);
+      
+      iconPath = tempIcon.path;
+      safeLog('Icon extracted to temp: $iconPath');
+
       await _systemTray.initSystemTray(
         title: "uKotka HotCorners",
         iconPath: iconPath,
@@ -183,7 +181,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
         }
       });
     } catch (e) {
-      safeLog('Tray Init Failed: $e');
+      safeLog('Tray Init Failed (Final Attempt): $e');
     }
   }
 
