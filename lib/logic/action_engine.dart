@@ -10,7 +10,9 @@ class ActionEngine {
     safeLog('Executing action: ${config.action}');
     switch (config.action) {
       case HotCornerActionType.monitorOff:
-        _sendMessage(WM_SYSCOMMAND, SC_MONITORPOWER, 2);
+        safeLog('Sending SC_MONITORPOWER (standby)...');
+        // Using 1 (standby) instead of 2 (off) for better compatibility and wake-up
+        SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 1);
         break;
       case HotCornerActionType.screenSaver:
         _sendMessage(WM_SYSCOMMAND, SC_SCREENSAVE, 0);

@@ -16,7 +16,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   window_manager: any
   screen_retriever: any
-  system_tray: any
+  tray_manager: any
   flutter_lucide: any
   animations: any
   win32: any

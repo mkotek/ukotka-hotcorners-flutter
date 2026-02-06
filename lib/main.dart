@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:system_tray/system_tray.dart';
+import 'package:tray_manager/tray_manager.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'dart:async';
 import 'dart:io';
@@ -73,24 +73,30 @@ class UKotkaHotCornersApp extends StatefulWidget {
   State<UKotkaHotCornersApp> createState() => _UKotkaHotCornersAppState();
 }
 
-class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowListener {
+class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowListener, TrayListener {
   final FlutterLocalization _localization = FlutterLocalization.instance;
-  final SystemTray _systemTray = SystemTray();
-  final Menu _menu = Menu();
   String _statusMessage = "Initializing...";
 
   @override
   void initState() {
     super.initState();
     windowManager.addListener(this);
-    safeLog('State initState called, WindowListener added');
+    trayManager.addListener(this);
+    safeLog('State initState called, Window/Tray listeners added');
     _initializeApp();
   }
 
   @override
   void dispose() {
     windowManager.removeListener(this);
+    trayManager.removeListener(this);
     super.dispose();
+  }
+
+  @override
+  void onWindowMinimize() async {
+    safeLog('Window minimized - Hiding to tray');
+    await windowManager.hide();
   }
 
   @override
@@ -148,17 +154,41 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
 
   void _initHotkeys() {
     try {
+      final hotkeyStr = ConfigService().suspendHotkey ?? 'Control+Alt+S';
+      safeLog('Initializing Hotkey: $hotkeyStr');
+      
+      // Basic parser for 'Control+Alt+S'
+      List<HotKeyModifier> modifiers = [];
+      if (hotkeyStr.contains('Control')) modifiers.add(HotKeyModifier.control);
+      if (hotkeyStr.contains('Alt')) modifiers.add(HotKeyModifier.alt);
+      if (hotkeyStr.contains('Shift')) modifiers.add(HotKeyModifier.shift);
+      
+      LogicalKeyboardKey key = LogicalKeyboardKey.keyS;
+      if (hotkeyStr.endsWith('+S')) key = LogicalKeyboardKey.keyS;
+      // Note: We can expand this parser if needed
+      
       HotKey hotKey = HotKey(
-        key: LogicalKeyboardKey.keyS,
-        modifiers: [HotKeyModifier.control, HotKeyModifier.alt],
+        key: key,
+        modifiers: modifiers,
         scope: HotKeyScope.system,
       );
 
+      hotKeyManager.unregister(hotKey); // Clean up if re-init
       hotKeyManager.register(
         hotKey,
         keyDownHandler: (hotKey) {
-          safeLog('Hotkey pressed');
-          // Implement logic here if needed
+          final manager = HotCornerManager();
+          final config = ConfigService();
+          config.isSuspended = !config.isSuspended;
+          safeLog('Hotkey pressed. Suspended: ${config.isSuspended}');
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(config.isSuspended ? "Aplikacja zawieszona" : "Aplikacja wznowiona"),
+              duration: const Duration(seconds: 1),
+            )
+          );
+          setState(() {});
         },
       );
     } catch (e) {
@@ -168,54 +198,50 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
 
   Future<void> _initSystemTray() async {
     try {
-      safeLog('Starting _initSystemTray...');
+      safeLog('Starting _initSystemTray (tray_manager)...');
       
-      // Use join for robust path handling
-      final String tempPath = p.join(Directory.systemTemp.path, 'ukotka_tray_icon.ico');
-      final File tempIcon = File(tempPath);
+      final String iconPath = p.join(Directory.systemTemp.path, 'ukotka_tray_icon.ico');
+      final File tempIcon = File(iconPath);
       
-      safeLog('Loading asset app_icon.ico...');
       final ByteData data = await rootBundle.load('assets/app_icon.ico');
       final List<int> bytes = data.buffer.asUint8List();
-      
-      safeLog('Writing icon to temp: $tempPath');
       await tempIcon.writeAsBytes(bytes, flush: true);
       
-      if (!await tempIcon.exists()) {
-        throw Exception("Failed to create temp icon file");
-      }
-
-      safeLog('Calling _systemTray.initSystemTray...');
-      await _systemTray.initSystemTray(
-        title: "uKotka HotCorners",
-        iconPath: tempPath,
-      );
+      await trayManager.setIcon(iconPath);
       
-      safeLog('Building tray menu...');
-      await _menu.buildFrom([
-        MenuItemLabel(label: 'Pokaż', onClicked: (menuItem) {
-          safeLog('Tray Menu: Show clicked');
-          windowManager.show();
-        }),
-        MenuItemLabel(label: 'Zamknij', onClicked: (menuItem) {
-          safeLog('Tray Menu: Close clicked - Exiting app');
-          windowManager.destroy(); // Force exit
-        }),
-      ]);
-      await _systemTray.setContextMenu(_menu);
+      List<MenuItem> items = [
+        MenuItem(key: 'show', label: 'Pokaż'),
+        MenuItem.separator(),
+        MenuItem(key: 'exit', label: 'Zamknij'),
+      ];
+      await trayManager.setContextMenu(Menu(items: items));
+      await trayManager.setToolTip('uKotka HotCorners');
       
-      _systemTray.registerSystemTrayEventHandler((eventName) {
-        safeLog('SystemTray Event: $eventName');
-        if (eventName == kSystemTrayEventClick) {
-          windowManager.show();
-        } else if (eventName == kSystemTrayEventRightClick) {
-          _systemTray.popUpContextMenu();
-        }
-      });
-      
-      safeLog('SystemTray successfully initialized');
+      safeLog('SystemTray (tray_manager) successfully initialized');
     } catch (e, s) {
       safeLog('Tray Init Failed: $e\n$s');
+    }
+  }
+
+  @override
+  void onTrayIconMouseDown() {
+    safeLog('Tray Icon Clicked');
+    windowManager.show();
+  }
+
+  @override
+  void onTrayIconRightMouseDown() {
+    trayManager.popUpContextMenu();
+  }
+
+  @override
+  void onTrayMenuItemClick(MenuItem menuItem) {
+    if (menuItem.key == 'show') {
+      safeLog('Tray Menu: Show');
+      windowManager.show();
+    } else if (menuItem.key == 'exit') {
+      safeLog('Tray Menu: Exit');
+      windowManager.destroy();
     }
   }
 

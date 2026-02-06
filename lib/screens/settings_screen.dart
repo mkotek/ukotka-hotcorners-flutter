@@ -101,13 +101,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             value: _selectedDisplayId,
             decoration: const InputDecoration(border: OutlineInputBorder()),
             items: _displays.map((d) {
-              final isPrimary = d.visiblePosition?.dx == 0 && d.visiblePosition?.dy == 0; // Heuristic for primary if id match fails
-              // Actually screen_retriever doesn't easily expose 'isPrimary' flag on Display objects in the list
-              // but we can try to guess or just show names.
-              String label = d.name ?? "Monitor ${d.id}";
+              // Heuristic to extract hardware name (e.g. SKG3407) from ID if possible
+              String hardwareName = "Monitor";
+              if (d.id.toString().contains('MONITOR\\')) {
+                try {
+                  final parts = d.id.toString().split('\\');
+                  if (parts.length > 1) hardwareName = parts[1];
+                } catch (_) {}
+              }
+
+              // Combined Label: Hardware (Primary) - WindowsName
+              String label = hardwareName;
               if (d.visiblePosition?.dx == 0 && d.visiblePosition?.dy == 0) {
                 label += " (Główny)";
               }
+              label += " - ${d.name ?? 'Device'}";
+
               return DropdownMenuItem(value: d.id.toString(), child: Text(label));
             }).toList(),
             onChanged: (val) {
@@ -352,6 +361,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onChanged: (val) {
             setState(() => _config.launchAtStartup = val);
             _config.save();
+          },
+        ),
+        const SizedBox(height: 16),
+        const Text("Skróty klawiszowe", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        ListTile(
+          leading: const Icon(LucideIcons.keyboard, color: Color(0xFF00C2FF)),
+          title: const Text("Zawieś/Wznów aplikację"),
+          subtitle: Text("Obecny skrót: ${_config.suspendHotkey ?? 'Control+Alt+S'}"),
+          onTap: () {
+            // Future: Implement hotkey changer dialog
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Możliwość zmiany skrótu zostanie dodana wkrótce!"))
+            );
           },
         ),
       ],
