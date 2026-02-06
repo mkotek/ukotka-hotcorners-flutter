@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.03
+- **Fix**: Resolved syntax error in Settings Screen (missing closing bracket).
+- **CI**: Enforced Windows runner.
+
 ## 1.1.00
 - **Mode-Specific Configurations**: Separate keys for Primary/Mirrored/Independent.
 - **UI Redesign**: Radio Buttons for Monitor Mode.
