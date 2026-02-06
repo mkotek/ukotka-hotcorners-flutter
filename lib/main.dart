@@ -144,11 +144,10 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   }
 
   Future<void> _initSystemTray() async {
-    // On Windows, 'app_icon' typically refers to the resource ID if not a path
-    // We try to load from the executable resources first
-    String iconPath = 'app_icon'; 
+    // On Windows, passing the executable path often allows extracting the main resource icon
+    String iconPath = Platform.resolvedExecutable; 
     
-    safeLog('Attempting initSystemTray with resource name: $iconPath');
+    safeLog('Attempting initSystemTray with EXE path: $iconPath');
 
     try {
       await _systemTray.initSystemTray(
