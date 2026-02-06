@@ -110,7 +110,7 @@ class HotCornerManager {
           if (elapsed >= activeConfig.dwellTime) {
             // Requirement: Action cooldown (Requirement #4)
             final now = DateTime.now();
-            if (_lastExecutionTime != null && now.difference(_lastExecutionTime!).inMilliseconds < 1500) {
+            if (_lastExecutionTime != null && now.difference(_lastExecutionTime!).inMilliseconds < _config.actionCooldownMs) {
               return; // Ignore if too soon
             }
 

@@ -198,7 +198,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                               // Corner Indicators
                               ...List.generate(4, (index) {
                                 final key = "${d.id}_$index";
-                                final hasAction = _config.configs[key]?.action != HotCornerActionType.none;
+                                final hasAction = _config.configs[key]?.action != null && _config.configs[key]?.action != HotCornerActionType.none;
                                 if (!hasAction) return const SizedBox();
                                 
                                 // Color logic based on action (Windows-like palette)
@@ -383,7 +383,22 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
         ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text("Zapobiega wielokrotnemu wywołaniu akcji (np. szybkiemu otwarciu i zamknięciu Centrum Akcji). Obecnie ustawione na 1.5s.", style: TextStyle(fontSize: 12, color: Colors.white54)),
+          child: Text("Opóźnienie między akcjami (Cooldown)", style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text("Minimalny odstęp czasu między kolejnymi wywołaniami akcji (zapobiega migotaniu).", style: TextStyle(fontSize: 12, color: Colors.white54)),
+        ),
+        Slider(
+          value: _config.actionCooldownMs.toDouble(),
+          min: 500,
+          max: 5000,
+          divisions: 9, 
+          label: "${_config.actionCooldownMs}ms",
+          onChanged: (val) {
+             setState(() => _config.actionCooldownMs = val.toInt());
+             _config.save();
+          },
         ),
         const SizedBox(height: 24),
         const Text("Skróty i zawieszanie", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -460,7 +475,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           ],
         ),
         const SizedBox(height: 12),
-        const Text('Wersja 1.2.1'),
+        const Text('Wersja 1.3.0'),
         const SizedBox(height: 12),
         const Text('Prosta i wydajna aplikacja do obsługi gorących narożników na Windows.'),
         const SizedBox(height: 16),

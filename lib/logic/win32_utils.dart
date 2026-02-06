@@ -24,11 +24,22 @@ class Win32Utils {
             String monitorString = monitor.ref.DeviceString;
             final deviceId = monitor.ref.DeviceID;
             
-            // Extract model name from DeviceID (e.g. MONITOR\GSM3407\...)
+            // Extract model name from DeviceID using regex for pattern like MONITOR\SKG2752\{GUID}\0013
+            // Target: SKG2752
             if (deviceId.isNotEmpty) {
-                 final parts = deviceId.split('\\');
-                 if (parts.length > 1 && (monitorString.contains("Generic") || monitorString.contains("Standardowy") || monitorString.isEmpty)) {
-                   monitorString = parts[1]; // Often the hardware model string
+                 // Try exact match for MONITOR\MODEL\
+                 final idMatch = RegExp(r'MONITOR\\([^\\]+)\\').firstMatch(deviceId);
+                 if (idMatch != null) {
+                   final model = idMatch.group(1);
+                   if (model != null && model.isNotEmpty) {
+                     monitorString = model;
+                   }
+                 } else {
+                   // Fallback to simple split
+                   final parts = deviceId.split('\\');
+                   if (parts.length > 1 && (monitorString.contains("Generic") || monitorString.contains("Standardowy") || monitorString.isEmpty)) {
+                     monitorString = parts[1]; 
+                   }
                  }
             }
             
