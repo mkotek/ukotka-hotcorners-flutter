@@ -338,9 +338,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       ),
     );
   }
-      ],
-    );
-  }
 
   Widget _buildCornerConfiguration() {
     return Column(
