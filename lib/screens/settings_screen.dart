@@ -3,6 +3,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:screen_retriever/screen_retriever.dart';
+import 'package:flutter/services.dart';
 import '../logic/localization.dart';
 import '../logic/config_service.dart';
 import '../models/corner_config.dart';
@@ -207,6 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       case HotCornerActionType.settings: return "Ustawienia Windows (Win+I)";
       case HotCornerActionType.snippingTool: return "Wycinanie i szkic (Win+Shift+S)";
       case HotCornerActionType.taskManager: return "Menedżer zadań (Ctrl+Shift+Esc)";
+      case HotCornerActionType.commandPalette: return "Paleta poleceń (Ctrl+Alt+Space)";
     }
   }
 

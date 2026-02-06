@@ -13,6 +13,7 @@ enum HotCornerActionType {
   settings,
   snippingTool,
   taskManager,
+  commandPalette,
 }
 
 class CornerConfig {

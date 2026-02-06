@@ -341,6 +341,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
       }
     } else if (menuItem.key == 'toggle_suspend') {
       config.isSuspended = !config.isSuspended;
+      await config.save();
       safeLog('Tray: Toggle Suspend -> ${config.isSuspended}');
     } else if (menuItem.key == 'snooze_30') {
       config.snoozeUntil = DateTime.now().add(const Duration(minutes: 30));

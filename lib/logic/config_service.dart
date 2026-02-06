@@ -41,6 +41,8 @@ class ConfigService {
     if (snoozeUntil != null && DateTime.now().isBefore(snoozeUntil!)) return true;
     return false;
   }
+
+  Future<void> init() async {
     await _load();
   }
 
@@ -60,6 +62,7 @@ class ConfigService {
       targetDisplayId = data['targetDisplayId'];
       launchAtStartup = data['launchAtStartup'] ?? false;
       suspendHotkey = data['suspendHotkey'] ?? 'Control+Alt+S';
+      isSuspended = data['isSuspended'] ?? false;
       minimizeOnClose = data['minimizeOnClose'] ?? true;
       dontAskExit = data['dontAskExit'] ?? false;
       
@@ -81,6 +84,7 @@ class ConfigService {
         'targetDisplayId': targetDisplayId,
         'launchAtStartup': launchAtStartup,
         'suspendHotkey': suspendHotkey,
+        'isSuspended': isSuspended,
         'minimizeOnClose': minimizeOnClose,
         'dontAskExit': dontAskExit,
         'configs': configs.map((key, value) => MapEntry(key, value.toJson())),
