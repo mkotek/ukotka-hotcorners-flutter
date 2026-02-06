@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../logic/localization.dart';
 import '../logic/config_service.dart';
 import '../models/corner_config.dart';
+import '../logic/win32_utils.dart';
 import '../main.dart'; // Import safeLog
 
 class SettingsScreen extends StatefulWidget {
@@ -100,25 +101,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _selectedDisplayId,
-            decoration: const InputDecoration(border: OutlineInputBorder()),
+            isExpanded: true,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
             items: _displays.map((d) {
-              // Heuristic to extract hardware name (e.g. SKG3407) from ID if possible
-              String hardwareName = "Monitor";
-              if (d.id.toString().contains('MONITOR\\')) {
-                try {
-                  final parts = d.id.toString().split('\\');
-                  if (parts.length > 1) hardwareName = parts[1];
-                } catch (_) {}
-              }
-
-              // Combined Label: Hardware (Primary) - WindowsName
+              final hardwareName = Win32Utils.getFriendlyNameForDisplay(d.id);
+              
               String label = hardwareName;
               if (d.visiblePosition?.dx == 0 && d.visiblePosition?.dy == 0) {
-                label += " (Główny)";
+                label += " [Główny]";
               }
-              label += " - ${d.name ?? 'Device'}";
+              label += " (${d.name})";
 
-              return DropdownMenuItem(value: d.id.toString(), child: Text(label));
+              return DropdownMenuItem(
+                value: d.id.toString(), 
+                child: Text(label, overflow: TextOverflow.ellipsis),
+              );
             }).toList(),
             onChanged: (val) {
               safeLog('Selected display for config changed to: $val');
@@ -140,9 +140,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          childAspectRatio: 3.0, // Shorter buttons
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
+          childAspectRatio: 4.2, // Very compact tiles
+          mainAxisSpacing: 6,
+          crossAxisSpacing: 6,
           children: [
             _buildCornerTile(AppLocale.cornerTopLeft.getString(context), 0, LucideIcons.arrow_up_left),
             _buildCornerTile(AppLocale.cornerTopRight.getString(context), 1, LucideIcons.arrow_up_right),
@@ -167,20 +167,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: config.action != HotCornerActionType.none ? const Color(0xFF00C2FF) : Colors.white12),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         child: Row(
           children: [
-            Icon(icon, color: config.action != HotCornerActionType.none ? const Color(0xFF00C2FF) : Colors.white24),
-            const SizedBox(width: 12),
+            Icon(icon, color: config.action != HotCornerActionType.none ? const Color(0xFF00C2FF) : Colors.white24, size: 20),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   Text(
                     _getActionLabel(config.action),
-                    style: const TextStyle(fontSize: 12, color: Colors.white54),
+                    style: const TextStyle(fontSize: 11, color: Colors.white54),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -391,6 +391,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _config.save();
           },
         ),
+        SwitchListTile(
+          title: const Text("Pokaż nakładkę wizualną (Overlay)"),
+          subtitle: const Text("Błysk w rogu przy aktywacji narożnika"),
+          value: _config.showOverlay,
+          activeTrackColor: const Color(0xFF00C2FF),
+          onChanged: (val) {
+            setState(() => _config.showOverlay = val);
+            _config.save();
+          },
+        ),
         const SizedBox(height: 16),
         const Text("Skróty i zawieszanie", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
@@ -518,22 +528,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showAboutDialog(BuildContext context) {
-    showAboutDialog(
+    showDialog(
       context: context,
-      applicationName: 'uKotka HotCorners',
-      applicationVersion: '1.0.0',
-      applicationIcon: const Icon(LucideIcons.cat, color: Color(0xFF00C2FF), size: 48),
-      children: [
-        const Text('Prosta i wydajna aplikacja do obsługi gorących narożników.'),
-        const SizedBox(height: 16),
-        InkWell(
-          onTap: () => launchUrl(Uri.parse('https://ukotka.com')),
-          child: const Text(
-            'https://ukotka.com',
-            style: TextStyle(color: Color(0xFF00C2FF), decoration: TextDecoration.underline),
-          ),
+      builder: (context) => AlertDialog(
+        title: const Text('O Programie'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(LucideIcons.cat, color: Color(0xFF00C2FF), size: 32),
+                SizedBox(width: 12),
+                Text('uKotka HotCorners', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text('Wersja 1.0.0'),
+            const SizedBox(height: 12),
+            const Text('Prosta i wydajna aplikacja do obsługi gorących narożników na Windows.'),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: () => launchUrl(Uri.parse('https://ukotka.com')),
+              child: const Text(
+                'https://ukotka.com',
+                style: TextStyle(color: Color(0xFF00C2FF), decoration: TextDecoration.underline),
+              ),
+            ),
+          ],
         ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () => showLicensePage(
+              context: context,
+              applicationName: 'uKotka HotCorners',
+            ),
+            child: const Text("Pokaż licencje"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Zamknij"),
+          ),
+        ],
+      ),
     );
   }
 }

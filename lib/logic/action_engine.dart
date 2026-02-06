@@ -67,8 +67,8 @@ class ActionEngine {
         _sendKeyCombo([VK_LCONTROL, VK_LSHIFT, VK_ESCAPE]);
         break;
       case HotCornerActionType.commandPalette:
-        // Ctrl + Alt + Space
-        _sendKeyCombo([VK_LCONTROL, VK_LMENU, VK_SPACE]);
+        // Win + Alt + Space
+        _sendKeyCombo([VK_LWIN, VK_LMENU, VK_SPACE]);
         break;
       case HotCornerActionType.none:
         break;

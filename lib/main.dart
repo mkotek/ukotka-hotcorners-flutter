@@ -28,9 +28,53 @@ void safeLog(String message) {
   }
 }
 
-void main() async {
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+void showCornerFlash(Offset offset) {
+  final context = navigatorKey.currentContext;
+  if (context == null) return;
+  
+  final overlay = Overlay.of(context);
+  late OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (context) => Positioned(
+      left: offset.dx - 25,
+      top: offset.dy - 25,
+      child: IgnorePointer(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 1.0, end: 0.0),
+          duration: const Duration(milliseconds: 500),
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00C2FF).withOpacity(0.5),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF00C2FF).withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 10,
+                    )
+                  ],
+                ),
+              ),
+            );
+          },
+          onEnd: () => entry.remove(),
+        ),
+      ),
+    ),
+  );
+  overlay.insert(entry);
+}
+
+void main(List<String> args) async {
   runZonedGuarded(() async {
-    safeLog('=== APP STARTING ===');
+    safeLog('=== APP STARTING (Args: $args) ===');
     
     try {
       WidgetsFlutterBinding.ensureInitialized();
@@ -50,10 +94,25 @@ void main() async {
       );
 
       windowManager.waitUntilReadyToShow(windowOptions, () async {
-        await windowManager.show();
-        await windowManager.focus();
         await windowManager.setPreventClose(true); // Prevent app exit on X click
-        safeLog('Window shown and focused (Close prevented)');
+        
+        // Handle CLI arguments
+        if (args.contains('--suspend')) {
+          await ConfigService().init();
+          ConfigService().isSuspended = true;
+          safeLog('CLI: Suspended via argument');
+          await windowManager.hide();
+          await windowManager.setSkipTaskbar(true);
+        } else if (args.contains('--settings')) {
+          await windowManager.show();
+          await windowManager.focus();
+        } else {
+          // Default behavior
+          await windowManager.show();
+          await windowManager.focus();
+        }
+        
+        safeLog('Window logic completed (Args handled)');
       });
 
     } catch (e, s) {
@@ -118,6 +177,9 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
   }
 
   void _showExitDialog() {
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
     bool dontAskAgain = false;
     showDialog(
       context: context,
@@ -266,13 +328,15 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
 
   Future<void> _updateTrayMenu() async {
     try {
+      // Small delay to ensure window state is propagated
+      await Future.delayed(const Duration(milliseconds: 100));
       final isVisible = await windowManager.isVisible();
       final config = ConfigService();
       
       List<MenuItem> items = [
         MenuItem(
           key: 'toggle_window', 
-          label: isVisible ? 'Ukryj okno' : 'Pokaż okno'
+          label: isVisible ? 'Pokaż okno' : 'Ukryj okno'
         ),
         MenuItem.separator(),
         MenuItem(
@@ -359,6 +423,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
     // If ready, show the actual app!
     if (_statusMessage == "Ready") {
       return MaterialApp(
+        navigatorKey: navigatorKey,
         supportedLocales: _localization.supportedLocales,
         localizationsDelegates: [
           ..._localization.localizationsDelegates,
@@ -384,6 +449,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
     
     // Otherwise show the Debug/Loading Safe Screen
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         backgroundColor: Colors.white,

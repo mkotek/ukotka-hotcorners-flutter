@@ -35,6 +35,7 @@ class ConfigService {
   DateTime? snoozeUntil;
   bool minimizeOnClose = true;
   bool dontAskExit = false;
+  bool showOverlay = true;
 
   bool get effectivelySuspended {
     if (isSuspended) return true;
@@ -65,6 +66,7 @@ class ConfigService {
       isSuspended = data['isSuspended'] ?? false;
       minimizeOnClose = data['minimizeOnClose'] ?? true;
       dontAskExit = data['dontAskExit'] ?? false;
+      showOverlay = data['showOverlay'] ?? true;
       
       if (data['configs'] != null) {
         final Map<String, dynamic> decoded = data['configs'];
@@ -87,6 +89,7 @@ class ConfigService {
         'isSuspended': isSuspended,
         'minimizeOnClose': minimizeOnClose,
         'dontAskExit': dontAskExit,
+        'showOverlay': showOverlay,
         'configs': configs.map((key, value) => MapEntry(key, value.toJson())),
       };
 

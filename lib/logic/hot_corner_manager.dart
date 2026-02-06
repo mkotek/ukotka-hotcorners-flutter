@@ -109,6 +109,12 @@ class HotCornerManager {
           if (elapsed >= activeConfig.dwellTime) {
             safeLog('Corner triggered: $currentCorner on Display $targetDisplay');
             ActionEngine.execute(activeConfig);
+            
+            // Visual feedback (V9)
+            if (_config.showOverlay) {
+              showCornerFlash(Offset(x, y));
+            }
+
             // Prevent multiple triggers by resetting discovery time into the future 
             // until the mouse leaves the corner.
             _discoveryTime = DateTime.now().add(const Duration(hours: 24)); 
