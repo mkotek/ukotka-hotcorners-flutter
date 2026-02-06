@@ -31,12 +31,9 @@ void safeLog(String message) {
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void showCornerFlash(Offset globalOffset) async {
-  final context = navigatorKey.currentContext;
-  if (context == null) return;
-  
-  final overlay = Overlay.maybeOf(context);
+  final overlay = navigatorKey.currentState?.overlay;
   if (overlay == null) {
-     safeLog('Overlay not available for flash (context: $context)');
+     safeLog('Overlay not available via navigatorKey.currentState?.overlay');
      return;
   }
   
@@ -79,10 +76,7 @@ void showCornerFlash(Offset globalOffset) async {
 }
 
 void showCornerPreview(int cornerIndex, double size, Offset globalCornerOffset) async {
-  final context = navigatorKey.currentContext;
-  if (context == null) return;
-
-  final overlay = Overlay.maybeOf(context);
+  final overlay = navigatorKey.currentState?.overlay;
   if (overlay == null) return;
 
   final Rect windowBounds = await windowManager.getBounds();
@@ -409,19 +403,17 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
       final File tempIcon = File(iconPath);
       final File tempPng = File(iconPngPath);
 
-      if (!await tempIcon.exists()) {
-        final ByteData data = await rootBundle.load('assets/app_icon.ico');
-        await tempIcon.writeAsBytes(data.buffer.asUint8List(), flush: true);
-      }
+      // Robustly write assets to exe dir
+      final ByteData icoData = await rootBundle.load('assets/app_icon.ico');
+      await tempIcon.writeAsBytes(icoData.buffer.asUint8List(), flush: true);
       
-      if (!await tempPng.exists()) {
-        final ByteData data = await rootBundle.load('assets/app_icon.png');
-        await tempPng.writeAsBytes(data.buffer.asUint8List(), flush: true);
-      }
+      final ByteData pngData = await rootBundle.load('assets/app_icon.png');
+      await tempPng.writeAsBytes(pngData.buffer.asUint8List(), flush: true);
       
-      // Try to set window icon explicitly
+      // Explicitly set window icon using PNG (more robust for taskbar)
       await windowManager.setIcon(iconPngPath); 
       
+      // Set tray icon using ICO
       await trayManager.setIcon(iconPath);
       safeLog('Tray icon set successfully to: $iconPath');
       await _updateTrayMenu();

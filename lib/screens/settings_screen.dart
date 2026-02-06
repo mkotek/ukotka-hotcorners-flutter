@@ -201,12 +201,14 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                                 final hasAction = _config.configs[key]?.action != HotCornerActionType.none;
                                 if (!hasAction) return const SizedBox();
                                 
-                                // Color logic based on action (simplified colors)
+                                // Color logic based on action (Windows-like palette)
                                 Color cornerColor = Colors.yellow;
                                 final action = _config.configs[key]?.action;
                                 if (action == HotCornerActionType.showDesktop) cornerColor = Colors.blueAccent;
                                 if (action == HotCornerActionType.lockWorkstation) cornerColor = Colors.redAccent;
                                 if (action == HotCornerActionType.taskView) cornerColor = Colors.orangeAccent;
+                                if (action == HotCornerActionType.monitorOff) cornerColor = Colors.deepPurpleAccent;
+                                if (action == HotCornerActionType.startMenu) cornerColor = Colors.blue;
 
                                 return Positioned(
                                   left: (index == 0 || index == 2) ? 2 : null,
