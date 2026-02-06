@@ -85,7 +85,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
       await ConfigService().init();
       
       safeLog('Localization Init...');
-      _initLocalization();
+      await _initLocalization();
       
       safeLog('SystemTray Init...');
       await _initSystemTray();
@@ -107,7 +107,8 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
     }
   }
 
-  void _initLocalization() {
+  Future<void> _initLocalization() async {
+    await _localization.ensureInitialized();
     _localization.init(
       mapLocales: [
         const MapLocale('en', AppLocale.EN),
