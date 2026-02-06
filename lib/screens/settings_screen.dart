@@ -235,6 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             max: 3000,
                             divisions: 30,
                             onChanged: (v) => setDialogState(() => tempDelay = v.toInt()),
+                          ),
                         ),
                       ],
                     ),
