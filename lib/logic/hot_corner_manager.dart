@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:ui';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
+import 'package:window_manager/window_manager.dart'; // Import window_manager
 import 'package:win32/win32.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'action_engine.dart';
@@ -81,7 +82,16 @@ class HotCornerManager {
             for (var corner in HotCorner.values) {
               if (corner == HotCorner.none) continue;
               
-              final configKey = "${display.id}_${corner.index}";
+              // V18: Mode-specific keys
+              String configKey;
+              if (_config.monitorMode == MonitorMode.mirrored) {
+                 configKey = "mirrored_${corner.index}";
+              } else if (_config.monitorMode == MonitorMode.primaryOnly) {
+                 configKey = "primary_${corner.index}";
+              } else {
+                 configKey = "${display.id}_${corner.index}";
+              }
+              
               final config = _config.configs[configKey] ?? CornerConfig();
               
               if (_isInsideCorner(Offset(x, y), displayRect, corner, config.cornerSize)) {
@@ -118,9 +128,12 @@ class HotCornerManager {
             ActionEngine.execute(activeConfig);
             _lastExecutionTime = now;
             
-            // Visual feedback (V9)
+            // Visual feedback (V9) - Setup Mode Only (User Request)
             if (_config.showOverlay) {
-              showCornerFlash(Offset(x, y));
+               // Fire and forget check to avoid await lag
+               windowManager.isVisible().then((visible) {
+                  if (visible) showCornerFlash(Offset(x, y));
+               });
             }
 
             // Prevent multiple triggers by resetting discovery time into the future 

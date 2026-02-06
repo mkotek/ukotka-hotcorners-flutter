@@ -224,7 +224,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text("Zamknij uKotka-HotCorners"),
+              title: const Text("Zamknij u Kotka Hot Corners"),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

@@ -197,7 +197,16 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                               ),
                               // Corner Indicators
                               ...List.generate(4, (index) {
-                                final key = "${d.id}_$index";
+                                // Determine key based on mode
+                                String key;
+                                if (_config.monitorMode == MonitorMode.mirrored) {
+                                  key = "mirrored_$index";
+                                } else if (_config.monitorMode == MonitorMode.primaryOnly) {
+                                  key = "primary_$index";
+                                } else {
+                                  key = "${d.id}_$index";
+                                }
+
                                 final hasAction = _config.configs[key]?.action != null && _config.configs[key]?.action != HotCornerActionType.none;
                                 if (!hasAction) return const SizedBox();
                                 
@@ -245,27 +254,46 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       children: [
         const Text("Tryb pracy monitorów", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        DropdownButtonFormField<MonitorMode>(
-          value: _config.monitorMode,
-          decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-          items: [
-            DropdownMenuItem(value: MonitorMode.primaryOnly, child: Text(AppLocale.primaryOnly.getString(context))),
-            DropdownMenuItem(value: MonitorMode.independent, child: Text(AppLocale.independent.getString(context))),
-            DropdownMenuItem(value: MonitorMode.mirrored, child: Text(AppLocale.mirrored.getString(context))),
-          ],
+        RadioListTile<MonitorMode>(
+          title: Text(AppLocale.primaryOnly.getString(context)),
+          value: MonitorMode.primaryOnly,
+          groupValue: _config.monitorMode,
+          activeColor: const Color(0xFF00C2FF),
           onChanged: (val) {
-            if (val != null) {
-              setState(() => _config.monitorMode = val);
-              _config.save();
-            }
+            setState(() => _config.monitorMode = val!);
+            _config.save();
           },
         ),
-        if (_config.monitorMode == MonitorMode.independent && _displays.length > 1) ...[
+        RadioListTile<MonitorMode>(
+           title: Text(AppLocale.mirrored.getString(context)),
+           subtitle: const Text("Te same akcje na wszystkich ekranach"),
+           value: MonitorMode.mirrored,
+           groupValue: _config.monitorMode,
+           activeColor: const Color(0xFF00C2FF),
+           onChanged: (val) {
+            setState(() => _config.monitorMode = val!);
+            _config.save();
+          },
+        ),
+        RadioListTile<MonitorMode>(
+           title: Text(AppLocale.independent.getString(context)),
+           subtitle: const Text("Każdy ekran ma osobne ustawienia"),
+           value: MonitorMode.independent,
+           groupValue: _config.monitorMode,
+           activeColor: const Color(0xFF00C2FF),
+           onChanged: (val) {
+            setState(() => _config.monitorMode = val!);
+            _config.save();
+          },
+        ),
+        if (_displays.length > 1) ...[ // Always show map if multiple displays
           const SizedBox(height: 16),
-          _buildMonitorMap(), // ADDED: Visual Monitor Map
+          _buildMonitorMap(),
           const SizedBox(height: 24),
-          const Text("Aktywne ustawienia dla wyświetlacza:"),
-          const SizedBox(height: 8),
+          // Only show display dropdown if INDEPENDENT mode
+          if (_config.monitorMode == MonitorMode.independent) ...[
+             const Text("Aktywne ustawienia dla wyświetlacza:"),
+             const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _selectedDisplayId,
             isExpanded: true,
@@ -293,7 +321,11 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
               setState(() => _selectedDisplayId = val);
             },
           ),
+          ],
         ],
+      ),
+    );
+  }
       ],
     );
   }
@@ -323,7 +355,16 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   }
 
   Widget _buildCornerTile(String label, int index, IconData icon) {
-    final key = "${_selectedDisplayId}_$index";
+    // V18: Mode-specific key logic
+    String key;
+    if (_config.monitorMode == MonitorMode.mirrored) {
+      key = "mirrored_$index";
+    } else if (_config.monitorMode == MonitorMode.primaryOnly) {
+      key = "primary_$index";
+    } else {
+      key = "${_selectedDisplayId}_$index";
+    }
+
     final config = _config.configs[key] ?? CornerConfig();
 
     return InkWell(
@@ -367,8 +408,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
         const Text("Responsywność i Overlay", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         SwitchListTile(
-          title: const Text("Pokaż nakładkę wizualną (Overlay)"),
-          subtitle: const Text("Błysk w rogu potwierdzający aktywację"),
+          title: const Text("Pokaż nakładkę wizualną (Tryb konfiguracji)"),
+          subtitle: const Text("Pokaż błysk w rogu tylko gdy okno aplikacji jest widoczne"),
           value: _config.showOverlay,
           activeTrackColor: const Color(0xFF00C2FF),
           onChanged: (val) {
@@ -389,16 +430,27 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Text("Minimalny odstęp czasu między kolejnymi wywołaniami akcji (zapobiega migotaniu).", style: TextStyle(fontSize: 12, color: Colors.white54)),
         ),
-        Slider(
-          value: _config.actionCooldownMs.toDouble(),
-          min: 500,
-          max: 5000,
-          divisions: 9, 
-          label: "${_config.actionCooldownMs}ms",
-          onChanged: (val) {
-             setState(() => _config.actionCooldownMs = val.toInt());
-             _config.save();
-          },
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Slider(
+                  value: _config.actionCooldownMs.toDouble(),
+                  min: 500,
+                  max: 5000,
+                  divisions: 9, 
+                  label: "${_config.actionCooldownMs}ms",
+                  onChanged: (val) {
+                     setState(() => _config.actionCooldownMs = val.toInt());
+                     _config.save();
+                  },
+                ),
+              ),
+              SizedBox(width: 60, child: Text("${(_config.actionCooldownMs / 1000).toStringAsFixed(1)}s", textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.bold))),
+            ],
+          ),
+        ),
         ),
         const SizedBox(height: 24),
         const Text("Skróty i zawieszanie", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -412,16 +464,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
         const SizedBox(height: 16),
         const Text("Snooze (Tymczasowe uśpienie)", style: TextStyle(fontSize: 14, color: Colors.grey)),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildSnoozeButton("5 min", 5),
-            _buildSnoozeButton("15 min", 15),
-            _buildSnoozeButton("30 min", 30),
-            _buildSnoozeButton("Reset", 0),
-          ],
-        ),
+        _buildSnoozeSlider(),
       ],
     );
   }
@@ -492,21 +535,67 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildSnoozeButton(String label, int minutes) {
-    bool isActive = _config.snoozeUntil != null && _config.snoozeUntil!.isAfter(DateTime.now());
-    return ElevatedButton(
-      onPressed: () {
-        setState(() {
-          if (minutes == 0) {
-            _config.snoozeUntil = null;
-          } else {
-            _config.snoozeUntil = DateTime.now().add(Duration(minutes: minutes));
-          }
-        });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(minutes == 0 ? "Wznowiono działanie" : "Aplikacja uśpiona na $minutes min")));
-      },
-      style: ElevatedButton.styleFrom(backgroundColor: isActive && minutes > 0 ? Colors.blueGrey : null, padding: const EdgeInsets.symmetric(horizontal: 12)),
-      child: Text(label),
+  Widget _buildSnoozeSlider() {
+    int currentMinutes = 0;
+    if (_config.snoozeUntil != null && _config.snoozeUntil!.isAfter(DateTime.now())) {
+      currentMinutes = _config.snoozeUntil!.difference(DateTime.now()).inMinutes;
+      if (currentMinutes < 0) currentMinutes = 0;
+    }
+
+    // Map slider value (0-4) to [0, 5, 15, 30, 60, 90]
+    final steps = [0, 5, 15, 30, 60, 90];
+    double sliderValue = 0;
+    
+    // Find closest step for current value
+    for (int i = 0; i < steps.length; i++) {
+      if (currentMinutes <= steps[i]) {
+        sliderValue = i.toDouble();
+        break;
+      }
+      if (i == steps.length - 1) sliderValue = i.toDouble();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Slider(
+                  value: sliderValue,
+                  min: 0,
+                  max: (steps.length - 1).toDouble(),
+                  divisions: steps.length - 1,
+                  label: steps[sliderValue.toInt()] == 0 ? "Aktywny" : "${steps[sliderValue.toInt()]} min",
+                  onChanged: (val) {
+                    setState(() {
+                      int mins = steps[val.toInt()];
+                      if (mins == 0) {
+                        _config.snoozeUntil = null;
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Wznowiono działanie (Reset)"), duration: Duration(milliseconds: 1000)));
+                      } else {
+                        _config.snoozeUntil = DateTime.now().add(Duration(minutes: mins));
+                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Uśpiono na $mins min"), duration: const Duration(milliseconds: 1000)));
+                      }
+                    });
+                  },
+                ),
+              ),
+              SizedBox(
+                width: 70, 
+                child: Text(
+                  steps[sliderValue.toInt()] == 0 ? "Aktywny" : "${steps[sliderValue.toInt()]} min", 
+                  textAlign: TextAlign.end, 
+                  style: TextStyle(fontWeight: FontWeight.bold, color: steps[sliderValue.toInt()] > 0 ? Colors.orangeAccent : Colors.grey)
+                )
+              ),
+            ],
+          ),
+          if (steps[sliderValue.toInt()] > 0)
+            const Text("Przesuń na 0 (lewo), aby zresetować.", style: TextStyle(fontSize: 11, color: Colors.white30)),
+        ],
+      ),
     );
   }
 
@@ -651,17 +740,21 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 TextButton(onPressed: () => Navigator.pop(context), child: const Text("Anuluj")),
                 ElevatedButton(
                   onPressed: () {
+                    Navigator.pop(context);
+                    
                     setState(() {
-                      _config.configs[key] = CornerConfig(
+                      final newConfig = CornerConfig(
                         action: tempAction,
                         appPath: tempPath,
                         appArgs: tempArgs,
                         cornerSize: tempSize,
                         dwellTime: Duration(milliseconds: tempDelay),
                       );
+
+                      // Save logic unified
+                      _config.configs[key] = newConfig;
                     });
                     _config.save();
-                    Navigator.pop(context);
                   },
                   child: const Text("Zapisz"),
                 ),
