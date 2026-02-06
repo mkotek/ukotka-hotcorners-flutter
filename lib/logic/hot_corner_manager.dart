@@ -27,6 +27,7 @@ class HotCornerManager {
   HotCorner _lastCorner = HotCorner.none;
   String? _lastDisplayId;
   DateTime? _discoveryTime;
+  DateTime? _lastExecutionTime;
   
   final ConfigService _config = ConfigService();
 
@@ -107,8 +108,15 @@ class HotCornerManager {
         if (currentCorner != HotCorner.none && _discoveryTime != null && activeConfig != null) {
           final elapsed = DateTime.now().difference(_discoveryTime!);
           if (elapsed >= activeConfig.dwellTime) {
-            safeLog('Corner triggered: $currentCorner on Display $targetDisplay');
+            // Requirement: Action cooldown (Requirement #4)
+            final now = DateTime.now();
+            if (_lastExecutionTime != null && now.difference(_lastExecutionTime!).inMilliseconds < 1500) {
+              return; // Ignore if too soon
+            }
+
+            safeLog('Corner triggered: $currentCorner on Display ${targetDisplay?.name} (${targetDisplay?.size.width.toInt()}x${targetDisplay?.size.height.toInt()})');
             ActionEngine.execute(activeConfig);
+            _lastExecutionTime = now;
             
             // Visual feedback (V9)
             if (_config.showOverlay) {

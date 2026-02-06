@@ -17,15 +17,23 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
   final ConfigService _config = ConfigService();
   List<Display> _displays = [];
   String? _selectedDisplayId;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _loadDisplays();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDisplays() async {
@@ -34,10 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final primary = await screenRetriever.getPrimaryDisplay();
       
       safeLog('Discovered ${displays.length} displays. Primary ID: ${primary.id}');
-      for (var d in displays) {
-         safeLog(' - Display ID: ${d.id}, Name: ${d.name}, Size: ${d.size}');
-      }
-
+      
       setState(() {
         _displays = displays;
         if (_displays.isNotEmpty && _selectedDisplayId == null) {
@@ -54,6 +59,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocale.title.getString(context)),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFF00C2FF),
+          labelColor: const Color(0xFF00C2FF),
+          unselectedLabelColor: Colors.white54,
+          tabs: const [
+            Tab(icon: Icon(LucideIcons.monitor), text: "Narożniki"),
+            Tab(icon: Icon(LucideIcons.zap), text: "Zachowanie"),
+            Tab(icon: Icon(LucideIcons.settings), text: "System"),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.info),
@@ -61,14 +77,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          _buildMonitorSection(),
-          const SizedBox(height: 32),
-          if (_selectedDisplayId != null) _buildCornerConfiguration(),
-          const SizedBox(height: 32),
-          _buildGeneralSettings(),
+          // TAB 1: CORNERS
+          ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              _buildMonitorSection(),
+              const SizedBox(height: 24),
+              if (_selectedDisplayId != null) _buildCornerConfiguration(),
+            ],
+          ),
+          // TAB 2: BEHAVIOR
+          ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              _buildBehaviorSettings(),
+            ],
+          ),
+          // TAB 3: SYSTEM
+          ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              _buildSystemSettings(),
+              const Divider(height: 48, color: Colors.white12),
+              _buildAboutSection(),
+            ],
+          ),
         ],
       ),
     );
@@ -78,11 +114,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppLocale.monitorMode.getString(context), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text("Tryb pracy monitorów", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         DropdownButtonFormField<MonitorMode>(
           value: _config.monitorMode,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
+          decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
           items: [
             DropdownMenuItem(value: MonitorMode.primaryOnly, child: Text(AppLocale.primaryOnly.getString(context))),
             DropdownMenuItem(value: MonitorMode.independent, child: Text(AppLocale.independent.getString(context))),
@@ -97,7 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         if (_config.monitorMode == MonitorMode.independent && _displays.length > 1) ...[
           const SizedBox(height: 16),
-          const Text("Wybierz monitor do konfiguracji:"),
+          const Text("Aktywne ustawienia dla monitora:"),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _selectedDisplayId,
@@ -107,21 +143,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             items: _displays.map((d) {
-              final hardwareName = Win32Utils.getFriendlyNameForDisplay(d.id);
+              final hardwareName = Win32Utils.getFriendlyNameForDisplay(d.id.toString());
               
               String label = hardwareName;
               if (d.visiblePosition?.dx == 0 && d.visiblePosition?.dy == 0) {
                 label += " [Główny]";
               }
-              label += " (${d.name})";
+              // Add resolution if available
+              if (d.size != null) {
+                label += " - ${d.size.width.toInt()}x${d.size.height.toInt()}";
+              }
 
               return DropdownMenuItem(
                 value: d.id.toString(), 
-                child: Text(label, overflow: TextOverflow.ellipsis),
+                child: Text(label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
               );
             }).toList(),
             onChanged: (val) {
-              safeLog('Selected display for config changed to: $val');
               setState(() => _selectedDisplayId = val);
             },
           ),
@@ -134,15 +172,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Konfiguracja narożników", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text("Akcje narożników", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          childAspectRatio: 4.2, // Very compact tiles
-          mainAxisSpacing: 6,
-          crossAxisSpacing: 6,
+          childAspectRatio: 3.8, 
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
           children: [
             _buildCornerTile(AppLocale.cornerTopLeft.getString(context), 0, LucideIcons.arrow_up_left),
             _buildCornerTile(AppLocale.cornerTopRight.getString(context), 1, LucideIcons.arrow_up_right),
@@ -192,6 +230,141 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildBehaviorSettings() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Responsywność i Overlay", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        SwitchListTile(
+          title: const Text("Pokaż nakładkę wizualną (Overlay)"),
+          subtitle: const Text("Błysk w rogu potwierdzający aktywację"),
+          value: _config.showOverlay,
+          activeTrackColor: const Color(0xFF00C2FF),
+          onChanged: (val) {
+            setState(() => _config.showOverlay = val);
+            _config.save();
+          },
+        ),
+        const SizedBox(height: 12),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text("Opóźnienie między akcjami (Cooldown)", style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text("Zapobiega wielokrotnemu wywołaniu akcji (np. szybkiemu otwarciu i zamknięciu Centrum Akcji). Obecnie ustawione na 1.5s.", style: TextStyle(fontSize: 12, color: Colors.white54)),
+        ),
+        const SizedBox(height: 24),
+        const Text("Skróty i zawieszanie", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        ListTile(
+          leading: const Icon(LucideIcons.keyboard, color: Color(0xFF00C2FF)),
+          title: const Text("Zmień skrót zawieszania"),
+          subtitle: Text("Obecny: ${_config.suspendHotkey ?? 'Control+Alt+S'}"),
+          onTap: () => _showHotkeyChanger(),
+        ),
+        const SizedBox(height: 16),
+        const Text("Snooze (Tymczasowe uśpienie)", style: TextStyle(fontSize: 14, color: Colors.grey)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildSnoozeButton("5 min", 5),
+            _buildSnoozeButton("15 min", 15),
+            _buildSnoozeButton("30 min", 30),
+            _buildSnoozeButton("Reset", 0),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSystemSettings() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Uruchamianie i Zamykanie", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        SwitchListTile(
+          title: Text(AppLocale.startup.getString(context)),
+          value: _config.launchAtStartup,
+          activeTrackColor: const Color(0xFF00C2FF),
+          onChanged: (val) {
+            setState(() => _config.launchAtStartup = val);
+            _config.save();
+          },
+        ),
+        SwitchListTile(
+          title: const Text("Zamykaj do traya (paska zadań)"),
+          value: _config.minimizeOnClose,
+          activeTrackColor: const Color(0xFF00C2FF),
+          onChanged: (val) {
+            setState(() => _config.minimizeOnClose = val);
+            _config.save();
+          },
+        ),
+        SwitchListTile(
+          title: const Text("Pytaj o akcję przy zamknięciu"),
+          value: !_config.dontAskExit,
+          activeTrackColor: const Color(0xFF00C2FF),
+          onChanged: (val) {
+            setState(() => _config.dontAskExit = !val);
+            _config.save();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAboutSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(LucideIcons.cat, color: Color(0xFF00C2FF), size: 32),
+            SizedBox(width: 12),
+            Text('uKotka HotCorners', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        const Text('Wersja 1.1.0'),
+        const SizedBox(height: 12),
+        const Text('Prosta i wydajna aplikacja do obsługi gorących narożników na Windows.'),
+        const SizedBox(height: 16),
+        InkWell(
+          onTap: () => launchUrl(Uri.parse('https://ukotka.com')),
+          child: const Text('https://ukotka.com', style: TextStyle(color: Color(0xFF00C2FF), decoration: TextDecoration.underline)),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: () => showLicensePage(context: context, applicationName: 'uKotka HotCorners'),
+          child: const Text("Pokaż licencje"),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSnoozeButton(String label, int minutes) {
+    bool isActive = _config.snoozeUntil != null && _config.snoozeUntil!.isAfter(DateTime.now());
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          if (minutes == 0) {
+            _config.snoozeUntil = null;
+          } else {
+            _config.snoozeUntil = DateTime.now().add(Duration(minutes: minutes));
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(minutes == 0 ? "Wznowiono działanie" : "Aplikacja uśpiona na $minutes min")));
+      },
+      style: ElevatedButton.styleFrom(backgroundColor: isActive && minutes > 0 ? Colors.blueGrey : null, padding: const EdgeInsets.symmetric(horizontal: 12)),
+      child: Text(label),
+    );
+  }
+
   String _getActionLabel(HotCornerActionType type) {
     switch (type) {
       case HotCornerActionType.none: return AppLocale.actionNone.getString(context);
@@ -208,11 +381,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       case HotCornerActionType.settings: return "Ustawienia Windows (Win+I)";
       case HotCornerActionType.snippingTool: return "Wycinanie i szkic (Win+Shift+S)";
       case HotCornerActionType.taskManager: return "Menedżer zadań (Ctrl+Shift+Esc)";
-      case HotCornerActionType.commandPalette: return "Paleta poleceń (Ctrl+Alt+Space)";
+      case HotCornerActionType.commandPalette: return "Paleta poleceń (Win+Alt+Space)";
     }
   }
 
   void _showCornerDialog(String label, String key, CornerConfig config, int index) {
+    // Find the current display object to get its position
+    final currentDisplay = _displays.firstWhere(
+      (d) => d.id.toString() == _selectedDisplayId, 
+      orElse: () => _displays.first
+    );
+
     showDialog(
       context: context,
       builder: (context) {
@@ -224,6 +403,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            void updatePreview(double size) {
+              final pos = currentDisplay.visiblePosition ?? const Offset(0, 0);
+              final sz = currentDisplay.size;
+              
+              Offset cornerPos = pos;
+              if (index == 1) cornerPos = Offset(pos.dx + sz.width, pos.dy);
+              if (index == 2) cornerPos = Offset(pos.dx, pos.dy + sz.height);
+              if (index == 3) cornerPos = Offset(pos.dx + sz.width, pos.dy + sz.height);
+              
+              showCornerPreview(index, size, cornerPos);
+            }
+
             return AlertDialog(
               title: Text(label),
               content: SingleChildScrollView(
@@ -244,43 +435,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         controller: TextEditingController(text: tempPath),
                       ),
                       TextField(
-                        decoration: const InputDecoration(labelText: "Parametry"),
+                        decoration: const InputDecoration(labelText: "Parametry (Optional)"),
                         onChanged: (v) => tempArgs = v,
                         controller: TextEditingController(text: tempArgs),
                       ),
                     ],
                     const SizedBox(height: 16),
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(child: Text("Rozmiar: ${tempSize.toInt()}px")),
-                        Expanded(
-                          flex: 2,
-                          child: Slider(
-                            value: tempSize,
-                            min: 1,
-                            max: 100,
-                            onChanged: (v) => setDialogState(() => tempSize = v),
-                          ),
+                        Text("Rozmiar: ${tempSize.toInt()}px"),
+                        Slider(
+                          value: tempSize,
+                          min: 5,
+                          max: 150,
+                          onChanged: (v) {
+                            setDialogState(() => tempSize = v);
+                            updatePreview(v);
+                          },
                         ),
                       ],
                     ),
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(child: Text("Opóźnienie: ${tempDelay}ms")),
-                        Expanded(
-                          flex: 2,
-                          child: Slider(
-                            value: tempDelay.toDouble(),
-                            min: 0,
-                            max: 3000,
-                            divisions: 30,
-                            onChanged: (v) => setDialogState(() => tempDelay = v.toInt()),
-                          ),
+                        Text("Opóźnienie (Dwell Time): ${tempDelay}ms"),
+                        Slider(
+                          value: tempDelay.toDouble(),
+                          min: 0,
+                          max: 3000,
+                          divisions: 30,
+                          onChanged: (v) => setDialogState(() => tempDelay = v.toInt()),
                         ),
                       ],
                     ),
-                    
-                    // PREVIEW VISUALIZATION
                     const SizedBox(height: 20),
                     const Text("Podgląd obszaru aktywnego:", style: TextStyle(fontSize: 12, color: Colors.grey)),
                     const SizedBox(height: 10),
@@ -288,11 +476,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Container(
                         width: 150,
                         height: 150,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          border: Border.all(color: Colors.white24),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        decoration: BoxDecoration(color: const Color(0xFF1E1E1E), border: Border.all(color: Colors.white24), borderRadius: BorderRadius.circular(8)),
                         child: Stack(
                           children: [
                             Positioned(
@@ -306,22 +490,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF00C2FF).withOpacity(0.5),
                                   border: Border.all(color: const Color(0xFF00C2FF), width: 1),
-                                  borderRadius: BorderRadius.only(
-                                    bottomRight: index == 0 ? const Radius.circular(4) : Radius.zero,
-                                    bottomLeft: index == 1 ? const Radius.circular(4) : Radius.zero,
-                                    topRight: index == 2 ? const Radius.circular(4) : Radius.zero,
-                                    topLeft: index == 3 ? const Radius.circular(4) : Radius.zero,
-                                  ),
                                 ),
                               ),
                             ),
-                            const Positioned(
-                              bottom: 8,
-                              right: 8,
-                              child: Text("Symulacja 150x150 px", 
-                                style: TextStyle(color: Colors.white38, fontSize: 10)
-                              ),
-                            ),
+                            const Positioned(bottom: 8, right: 8, child: Text("Symulacja 150px", style: TextStyle(color: Colors.white38, fontSize: 10))),
                           ],
                         ),
                       ),
@@ -355,104 +527,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildGeneralSettings() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Ogólne", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        SwitchListTile(
-          title: Text(AppLocale.startup.getString(context)),
-          value: _config.launchAtStartup,
-          activeTrackColor: const Color(0xFF00C2FF),
-          onChanged: (val) {
-            setState(() => _config.launchAtStartup = val);
-            _config.save();
-          },
-        ),
-        const SizedBox(height: 8),
-        SwitchListTile(
-          title: const Text("Zamykaj do traya (paska zadań)"),
-          subtitle: const Text("Jeśli wyłączone, X całkowicie zamknie aplikację"),
-          value: _config.minimizeOnClose,
-          activeTrackColor: const Color(0xFF00C2FF),
-          onChanged: (val) {
-            setState(() => _config.minimizeOnClose = val);
-            _config.save();
-          },
-        ),
-        SwitchListTile(
-          title: const Text("Pytaj o akcję przy zamknięciu"),
-          subtitle: const Text("Pokazuje wybór: Zamknij vs Tray"),
-          value: !_config.dontAskExit,
-          activeTrackColor: const Color(0xFF00C2FF),
-          onChanged: (val) {
-            setState(() => _config.dontAskExit = !val);
-            _config.save();
-          },
-        ),
-        SwitchListTile(
-          title: const Text("Pokaż nakładkę wizualną (Overlay)"),
-          subtitle: const Text("Błysk w rogu przy aktywacji narożnika"),
-          value: _config.showOverlay,
-          activeTrackColor: const Color(0xFF00C2FF),
-          onChanged: (val) {
-            setState(() => _config.showOverlay = val);
-            _config.save();
-          },
-        ),
-        const SizedBox(height: 16),
-        const Text("Skróty i zawieszanie", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        ListTile(
-          leading: const Icon(LucideIcons.keyboard, color: Color(0xFF00C2FF)),
-          title: const Text("Zmień skrót zawieszania"),
-          subtitle: Text("Obecny: ${_config.suspendHotkey ?? 'Control+Alt+S'}"),
-          onTap: () => _showHotkeyChanger(),
-        ),
-        const SizedBox(height: 8),
-        const Text("Snooze (Tymczasowe uśpienie)", style: TextStyle(fontSize: 14, color: Colors.grey)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildSnoozeButton("5 min", 5),
-            _buildSnoozeButton("15 min", 15),
-            _buildSnoozeButton("30 min", 30),
-            _buildSnoozeButton("60 min", 60),
-            _buildSnoozeButton("Reset", 0),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSnoozeButton(String label, int minutes) {
-    bool isActive = _config.snoozeUntil != null && 
-                    _config.snoozeUntil!.isAfter(DateTime.now());
-    
-    return ElevatedButton(
-      onPressed: () {
-        setState(() {
-          if (minutes == 0) {
-            _config.snoozeUntil = null;
-          } else {
-            _config.snoozeUntil = DateTime.now().add(Duration(minutes: minutes));
-          }
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Aplikacja uśpiona na $minutes min"))
-        );
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isActive ? Colors.blueGrey : null,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-      ),
-      child: Text(label),
-    );
-  }
-
   void _showHotkeyChanger() {
     String currentKeys = "";
     showDialog(
@@ -468,17 +542,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (event.isControlPressed) keys.add("Control");
                   if (event.isAltPressed) keys.add("Alt");
                   if (event.isShiftPressed) keys.add("Shift");
-                  
                   final keyLabel = event.logicalKey.keyLabel;
-                  if (keyLabel != "Control" && keyLabel != "Alt" && keyLabel != "Shift") {
-                    keys.add(keyLabel);
-                  }
-                  
-                  if (keys.isNotEmpty) {
-                    setDialogState(() {
-                      currentKeys = keys.join("+");
-                    });
-                  }
+                  if (keyLabel != "Control" && keyLabel != "Alt" && keyLabel != "Shift") keys.add(keyLabel);
+                  if (keys.isNotEmpty) setDialogState(() => currentKeys = keys.join("+"));
                 }
               },
               child: AlertDialog(
@@ -488,31 +554,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     const Text("Naciśnij kombinację klawiszy (np. Ctrl+Alt+S)"),
                     const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.blue),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        currentKeys.isEmpty ? "Czekam na klawisze..." : currentKeys,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(border: Border.all(color: Colors.blue), borderRadius: BorderRadius.circular(8)), child: Text(currentKeys.isEmpty ? "Czekam na klawisze..." : currentKeys, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
                   ],
                 ),
                 actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("Anuluj"),
-                  ),
+                  TextButton(onPressed: () => Navigator.pop(context), child: const Text("Anuluj")),
                   TextButton(
                     onPressed: () {
                       if (currentKeys.isNotEmpty) {
-                        setState(() {
-                          _config.suspendHotkey = currentKeys;
-                          _config.save();
-                        });
+                        setState(() { _config.suspendHotkey = currentKeys; _config.save(); });
                         Navigator.pop(context);
                       }
                     },
@@ -528,49 +578,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showAboutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('O Programie'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(LucideIcons.cat, color: Color(0xFF00C2FF), size: 32),
-                SizedBox(width: 12),
-                Text('uKotka HotCorners', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text('Wersja 1.0.0'),
-            const SizedBox(height: 12),
-            const Text('Prosta i wydajna aplikacja do obsługi gorących narożników na Windows.'),
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: () => launchUrl(Uri.parse('https://ukotka.com')),
-              child: const Text(
-                'https://ukotka.com',
-                style: TextStyle(color: Color(0xFF00C2FF), decoration: TextDecoration.underline),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => showLicensePage(
-              context: context,
-              applicationName: 'uKotka HotCorners',
-            ),
-            child: const Text("Pokaż licencje"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Zamknij"),
-          ),
-        ],
-      ),
-    );
+    // Legacy dialog kept as fallback or detailed view
+    showDialog(context: context, builder: (context) => AlertDialog(title: const Text('O Programie'), content: _buildAboutSection(), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Zamknij"))]));
   }
 }
