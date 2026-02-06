@@ -3,8 +3,7 @@ import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 
 class Win32Utils {
-  /// Returns a map of Display Name (e.g. \\.\DISPLAY1) to Friendly Name (e.g. Dell U2515H)
-  /// Reverted to EnumDisplayDevices for maximum compatibility with older win32 packages.
+  /// Returns a map of GDI Name (e.g. \\.\DISPLAY1) to Friendly Name (e.g. Dell U2515H)
   static Map<String, String> getMonitorFriendlyNames() {
     final Map<String, String> names = {};
     
@@ -14,34 +13,30 @@ class Win32Utils {
     try {
       int i = 0;
       while (EnumDisplayDevices(nullptr, i, adapter, 0) != 0) {
-        final deviceName = adapter.ref.DeviceName;
+        final deviceName = adapter.ref.DeviceName; // e.g. \\.\DISPLAY1
         final lpDeviceName = deviceName.toNativeUtf16();
         
         try {
           final monitor = calloc<DISPLAY_DEVICE>();
           monitor.ref.cb = sizeOf<DISPLAY_DEVICE>();
           
-          // Get the monitor for this device
           if (EnumDisplayDevices(lpDeviceName, 0, monitor, 0) != 0) {
             String monitorString = monitor.ref.DeviceString;
-            
-            // If it's empty or generic, we try to use the DeviceID to find something better in Registry
-            // Typically DeviceID for a monitor looks like: MONITOR\GSM3407\{4d36e96e-e325-11ce-bfc1-08002be10318}\0001
-            // The part after MONITOR\ is often the model name prefix.
             final deviceId = monitor.ref.DeviceID;
-            if (deviceId.isNotEmpty && (monitorString.isEmpty || monitorString == "Generic PnP Monitor" || monitorString == "Monitor Standardowy")) {
+            
+            // Try to extract a hardware-specific ID segment if name is generic
+            if (deviceId.isNotEmpty && (monitorString.isEmpty || monitorString.contains("Generic") || monitorString.contains("Standardowy") || monitorString.contains("PnP"))) {
                  final parts = deviceId.split('\\');
                  if (parts.length > 1) {
-                   // e.g. "K27T52" from MONITOR\K27T52\...
+                   // Often parts[1] is the model code, e.g. "SKG3407"
                    monitorString = parts[1];
                  }
             }
             
-            if (monitorString.isEmpty) {
-              monitorString = "Monitor ($deviceName)";
+            // Do NOT store the GDI name as the friendly name
+            if (monitorString.isNotEmpty && monitorString != deviceName) {
+              names[deviceName] = monitorString;
             }
-            
-            names[deviceName] = monitorString;
           }
           free(monitor);
         } finally {
@@ -58,15 +53,11 @@ class Win32Utils {
 
   static String getFriendlyNameForDisplay(String displayId) {
     try {
-      final names = getMonitorFriendlyNames();
-      final friendlyName = names[displayId] ?? displayId;
-      
-      // Clean up common generic names if they still persisted
-      if (friendlyName == "Generic PnP Monitor" || friendlyName == "Monitor Standardowy") {
-        return "Monitor ($displayId)";
+      // Per user request: simplify to just "DISPLAY X"
+      if (displayId.startsWith(r'\\.\')) {
+        return displayId.substring(4); // e.g. "DISPLAY3"
       }
-      
-      return "$friendlyName ($displayId)";
+      return displayId;
     } catch (_) {
       return displayId;
     }

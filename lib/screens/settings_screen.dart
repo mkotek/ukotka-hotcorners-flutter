@@ -143,13 +143,12 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             items: _displays.map((d) {
-              final hardwareName = Win32Utils.getFriendlyNameForDisplay(d.id.toString());
+              final displayName = Win32Utils.getFriendlyNameForDisplay(d.id.toString());
               
-              String label = hardwareName;
+              String label = displayName;
               if (d.visiblePosition?.dx == 0 && d.visiblePosition?.dy == 0) {
                 label += " [Główny]";
               }
-              // Add resolution if available
               if (d.size != null) {
                 label += " - ${d.size.width.toInt()}x${d.size.height.toInt()}";
               }

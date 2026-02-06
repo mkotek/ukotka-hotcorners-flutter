@@ -34,19 +34,21 @@ void showCornerFlash(Offset globalOffset) async {
   final context = navigatorKey.currentContext;
   if (context == null) return;
   
-  // Try to bring window to front if not visible, but without stealing focus
-  // Actually, for a flash, we just need the overlay to be inserted.
+  final overlay = Overlay.maybeOf(context);
+  if (overlay == null) {
+     safeLog('Overlay not available for flash (context: $context)');
+     return;
+  }
   
   final Rect windowBounds = await windowManager.getBounds();
   final double localX = globalOffset.dx - windowBounds.left;
   final double localY = globalOffset.dy - windowBounds.top;
 
-  final overlay = Overlay.of(context);
   late OverlayEntry entry;
   entry = OverlayEntry(
     builder: (context) => Positioned(
-      left: localX - 25,
-      top: localY - 25,
+      left: localX - 60,
+      top: localY - 60,
       child: IgnorePointer(
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 1.0, end: 0.0),
@@ -55,14 +57,14 @@ void showCornerFlash(Offset globalOffset) async {
             return Opacity(
               opacity: value,
               child: Container(
-                width: 50,
-                height: 50,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00C2FF).withOpacity(0.6),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  color: Colors.yellow.withOpacity(0.35),
+                  border: Border.all(color: Colors.yellow, width: 2),
+                  borderRadius: BorderRadius.circular(4),
                   boxShadow: [
-                    BoxShadow(color: const Color(0xFF00C2FF).withOpacity(0.5), blurRadius: 15, spreadRadius: 5)
+                    BoxShadow(color: Colors.yellow.withOpacity(0.2), blurRadius: 15, spreadRadius: 2)
                   ],
                 ),
               ),
@@ -80,11 +82,13 @@ void showCornerPreview(int cornerIndex, double size, Offset globalCornerOffset) 
   final context = navigatorKey.currentContext;
   if (context == null) return;
 
+  final overlay = Overlay.maybeOf(context);
+  if (overlay == null) return;
+
   final Rect windowBounds = await windowManager.getBounds();
   final double localX = globalCornerOffset.dx - windowBounds.left;
   final double localY = globalCornerOffset.dy - windowBounds.top;
 
-  final overlay = Overlay.of(context);
   late OverlayEntry entry;
   entry = OverlayEntry(
     builder: (context) => Positioned(
@@ -95,18 +99,19 @@ void showCornerPreview(int cornerIndex, double size, Offset globalCornerOffset) 
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: const Color(0xFF00C2FF).withOpacity(0.3),
-            border: Border.all(color: const Color(0xFF00C2FF), width: 2),
+            color: Colors.yellow.withOpacity(0.3),
+            border: Border.all(color: Colors.yellow, width: 2),
+            borderRadius: BorderRadius.circular(2),
           ),
           child: const Center(
-            child: Icon(Icons.ads_click, color: Colors.white70, size: 16),
+            child: Icon(Icons.ads_click, color: Colors.black87, size: 20),
           ),
         ),
       ),
     ),
   );
   overlay.insert(entry);
-  Future.delayed(const Duration(milliseconds: 1000), () => entry.remove());
+  Future.delayed(const Duration(milliseconds: 800), () => entry.remove());
 }
 
 void main(List<String> args) async {
@@ -128,6 +133,7 @@ void main(List<String> args) async {
         backgroundColor: Colors.transparent, // Allow transparency for overlay later
         skipTaskbar: false,
         titleBarStyle: TitleBarStyle.normal,
+        title: 'uKotka Hot Corners',
       );
 
       windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -398,18 +404,28 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
       safeLog('Starting _initSystemTray (tray_manager)...');
       
       final String iconPath = p.join(p.dirname(Platform.resolvedExecutable), 'app_icon.ico');
-      final File tempIcon = File(iconPath);
+      final String iconPngPath = p.join(p.dirname(Platform.resolvedExecutable), 'app_icon.png');
       
+      final File tempIcon = File(iconPath);
+      final File tempPng = File(iconPngPath);
+
       if (!await tempIcon.exists()) {
         final ByteData data = await rootBundle.load('assets/app_icon.ico');
-        final List<int> bytes = data.buffer.asUint8List();
-        await tempIcon.writeAsBytes(bytes, flush: true);
+        await tempIcon.writeAsBytes(data.buffer.asUint8List(), flush: true);
       }
+      
+      if (!await tempPng.exists()) {
+        final ByteData data = await rootBundle.load('assets/app_icon.png');
+        await tempPng.writeAsBytes(data.buffer.asUint8List(), flush: true);
+      }
+      
+      // Try to set window icon explicitly
+      await windowManager.setIcon(iconPngPath); 
       
       await trayManager.setIcon(iconPath);
       safeLog('Tray icon set successfully to: $iconPath');
       await _updateTrayMenu();
-      await trayManager.setToolTip('uKotka HotCorners');
+      await trayManager.setToolTip('uKotka Hot Corners');
       
       safeLog('SystemTray (tray_manager) successfully initialized');
     } catch (e, s) {
