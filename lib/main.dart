@@ -144,19 +144,15 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   }
 
   Future<void> _initSystemTray() async {
-    String iconPath = 'assets/app_icon.ico';
-    if (Platform.isWindows) {
-      final String exePath = Platform.resolvedExecutable;
-      final String exeDir = File(exePath).parent.path;
-      iconPath = '$exeDir\\data\\flutter_assets\\assets\\app_icon.ico';
-    }
+    // On Windows, 'app_icon' typically refers to the resource ID if not a path
+    // We try to load from the executable resources first
+    String iconPath = 'app_icon'; 
     
-    // Validate ICO header briefly? No, just trust file exists for now.
-    safeLog('Tray Icon Path: $iconPath (Exists: ${File(iconPath).existsSync()})');
+    safeLog('Attempting initSystemTray with resource name: $iconPath');
 
     try {
       await _systemTray.initSystemTray(
-        title: "uKotka HotCorners Debug",
+        title: "uKotka HotCorners",
         iconPath: iconPath,
       );
       
