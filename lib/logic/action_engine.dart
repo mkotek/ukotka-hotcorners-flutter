@@ -63,10 +63,11 @@ class ActionEngine {
         inputs[i].type = INPUT_KEYBOARD;
         inputs[i].ki.wVk = keys[i];
       }
-      // Key Up
+      // Key Up (Reverse Order)
       for (var i = 0; i < keys.length; i++) {
+        final keyIdx = keys.length - 1 - i;
         inputs[keys.length + i].type = INPUT_KEYBOARD;
-        inputs[keys.length + i].ki.wVk = keys[i];
+        inputs[keys.length + i].ki.wVk = keys[keyIdx];
         inputs[keys.length + i].ki.dwFlags = KEYEVENTF_KEYUP;
       }
       SendInput(keys.length * 2, inputs, sizeOf<INPUT>());
