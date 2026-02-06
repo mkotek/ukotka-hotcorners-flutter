@@ -7,6 +7,7 @@ import 'package:system_tray/system_tray.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 import 'logic/localization.dart';
 import 'logic/config_service.dart';
@@ -145,10 +146,22 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> {
   }
 
   Future<void> _initSystemTray() async {
-    // On Windows, passing the executable path often allows extracting the main resource icon
-    String iconPath = Platform.resolvedExecutable; 
-    
-    safeLog('Attempting initSystemTray with EXE path: $iconPath');
+    // Attempt to locate the bundled asset icon
+    String iconPath = p.join(
+      p.dirname(Platform.resolvedExecutable),
+      'data',
+      'flutter_assets',
+      'assets',
+      'app_icon.ico',
+    );
+
+    safeLog('Calculated Asset Path: $iconPath');
+
+    if (!File(iconPath).existsSync()) {
+      safeLog('WARNING: Icon file not found at calculated path.');
+      // Fallback: try relative valid path in dev environment? 
+      // Or just try the executable as last resort (though we know it fails)
+    }
 
     try {
       await _systemTray.initSystemTray(
