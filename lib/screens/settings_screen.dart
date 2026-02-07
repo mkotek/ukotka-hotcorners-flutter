@@ -90,10 +90,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.info),
-            onPressed: () => _showAboutDialog(context),
-          ),
         ],
       ),
       body: TabBarView(
@@ -142,7 +138,16 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text("Układ wyświetlaczy", style: TextStyle(color: Colors.white70, fontSize: 13)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Układ wyświetlaczy", style: TextStyle(color: Colors.white70, fontSize: 13)),
+              if (_config.monitorMode == MonitorMode.primaryOnly)
+                const Text("(Tylko Główny)", style: TextStyle(color: Colors.greenAccent, fontSize: 11)),
+              if (_config.monitorMode == MonitorMode.mirrored)
+                const Text("(Te same akcje)", style: TextStyle(color: Colors.blueAccent, fontSize: 11)),
+            ],
+          ),
           const SizedBox(height: 20),
           LayoutBuilder(
             builder: (context, constraints) {

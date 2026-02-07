@@ -63,7 +63,7 @@ class ConfigService {
       monitorMode = MonitorMode.values[data['monitorMode'] ?? 0];
       targetDisplayId = data['targetDisplayId'];
       launchAtStartup = data['launchAtStartup'] ?? false;
-      suspendHotkey = data['suspendHotkey'] ?? 'Control+Alt+S';
+      suspendHotkey = data['suspendHotkey'] ?? 'Control+Minus';
       isSuspended = data['isSuspended'] ?? false;
       minimizeOnClose = data['minimizeOnClose'] ?? true;
       dontAskExit = data['dontAskExit'] ?? false;

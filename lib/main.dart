@@ -397,8 +397,8 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
     try {
       safeLog('Starting _initSystemTray (tray_manager)...');
       
-      final String iconPath = p.join(p.dirname(Platform.resolvedExecutable), 'app_icon.ico');
-      final String iconPngPath = p.join(p.dirname(Platform.resolvedExecutable), 'app_icon.png');
+      final String iconPath = p.join(Directory.systemTemp.path, 'ukotka_icon.ico');
+      final String iconPngPath = p.join(Directory.systemTemp.path, 'ukotka_icon.png');
       
       final File tempIcon = File(iconPath);
       final File tempPng = File(iconPngPath);
