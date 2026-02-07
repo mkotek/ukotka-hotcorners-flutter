@@ -181,7 +181,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                     final pos = d.visiblePosition ?? Offset.zero;
                     final size = d.size ?? Size.zero;
                     final isSelected = d.id.toString() == _selectedDisplayId;
-                    final displayNum = Win32Utils.getDisplayNumber(d.id.toString());
+                    final displayNum = Win32Utils.getDisplayNumber(d.name ?? '');
 
                     return Positioned(
                       left: (pos.dx - minX) * scale,
@@ -318,14 +318,19 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             items: _displays.map((d) {
-              final displayName = Win32Utils.getFriendlyNameForDisplay(d.id.toString());
+              // Use name for number lookup, id for value
+              final displayNum = Win32Utils.getDisplayNumber(d.name ?? '');
+              final friendlyName = Win32Utils.getFriendlyNameForDisplay(d.name ?? '');
               
-              String label = displayName;
+              String label = "Display $displayNum";
+              if (friendlyName.isNotEmpty && friendlyName != "Display $displayNum" && friendlyName != (d.name ?? '')) {
+                 label += ": $friendlyName";
+              } else {
+                 label += " (${d.size?.width.toInt()}x${d.size?.height.toInt()})";
+              }
+
               if (d.visiblePosition?.dx == 0 && d.visiblePosition?.dy == 0) {
                 label += " [Główny]";
-              }
-              if (d.size != null) {
-                label += " (${d.size.width.toInt()}x${d.size.height.toInt()})";
               }
 
               return DropdownMenuItem(
