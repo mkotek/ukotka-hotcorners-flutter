@@ -40,7 +40,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       _appVersion = info.version;
     });
   }
-  }
 
   @override
   void dispose() {
