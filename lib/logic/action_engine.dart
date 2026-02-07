@@ -10,9 +10,11 @@ class ActionEngine {
     safeLog('Executing action: ${config.action}');
     switch (config.action) {
       case HotCornerActionType.monitorOff:
-        safeLog('Sending SC_MONITORPOWER (standby)...');
-        // Using 1 (standby) instead of 2 (off) for better compatibility and wake-up
-        SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 1);
+        safeLog('Preparing SC_MONITORPOWER (Off)...');
+        // Delay to allow mouse to stop moving, otherwise it wakes immediately
+        await Future.delayed(const Duration(milliseconds: 500)); 
+        safeLog('Sending SC_MONITORPOWER (2)...');
+        SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 2);
         break;
       case HotCornerActionType.screenSaver:
         _sendMessage(WM_SYSCOMMAND, SC_SCREENSAVE, 0);

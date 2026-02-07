@@ -428,7 +428,14 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
   @override
   void onTrayIconMouseDown() async {
     safeLog('Tray Icon Clicked - Force restoring window');
+    await _restoreWindow();
+  }
+  
+  Future<void> _restoreWindow() async {
     await windowManager.setSkipTaskbar(false);
+    if (await windowManager.isMinimized()) {
+      await windowManager.restore();
+    }
     await windowManager.show();
     await windowManager.focus();
     _updateTrayMenu();
@@ -447,9 +454,7 @@ class _UKotkaHotCornersAppState extends State<UKotkaHotCornersApp> with WindowLi
         await windowManager.hide();
         await windowManager.setSkipTaskbar(true);
       } else {
-        await windowManager.setSkipTaskbar(false);
-        await windowManager.show();
-        await windowManager.focus();
+        await _restoreWindow();
       }
     } else if (menuItem.key == 'toggle_suspend') {
       config.isSuspended = !config.isSuspended;

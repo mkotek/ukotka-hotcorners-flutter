@@ -310,38 +310,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           if (_config.monitorMode == MonitorMode.independent) ...[
              const Text("Aktywne ustawienia dla wyświetlacza:"),
              const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            value: _selectedDisplayId,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-            items: _displays.map((d) {
-              // Use name for number lookup, id for value
-              final displayNum = Win32Utils.getDisplayNumber(d.name ?? '');
-              final friendlyName = Win32Utils.getFriendlyNameForDisplay(d.name ?? '');
-              
-              String label = "Display $displayNum";
-              if (friendlyName.isNotEmpty && friendlyName != "Display $displayNum" && friendlyName != (d.name ?? '')) {
-                 label += ": $friendlyName";
-              } else {
-                 label += " (${d.size?.width.toInt()}x${d.size?.height.toInt()})";
-              }
-
-              if (d.visiblePosition?.dx == 0 && d.visiblePosition?.dy == 0) {
-                label += " [Główny]";
-              }
-
-              return DropdownMenuItem(
-                value: d.id.toString(), 
-                child: Text(label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
-              );
-            }).toList(),
-            onChanged: (val) {
-              setState(() => _selectedDisplayId = val);
-            },
-          ),
           ],
         ],
       ],
