@@ -36,6 +36,7 @@ class ConfigService {
   bool minimizeOnClose = true;
   bool dontAskExit = false;
   int actionCooldownMs = 1500;
+  bool showOverlay = true;
 
   bool get effectivelySuspended {
     if (isSuspended) return true;
@@ -67,6 +68,7 @@ class ConfigService {
       minimizeOnClose = data['minimizeOnClose'] ?? true;
       dontAskExit = data['dontAskExit'] ?? false;
       actionCooldownMs = data['actionCooldownMs'] ?? 1500;
+      showOverlay = data['showOverlay'] ?? true;
       
       if (data['configs'] != null) {
         final Map<String, dynamic> decoded = data['configs'];
@@ -90,6 +92,7 @@ class ConfigService {
         'minimizeOnClose': minimizeOnClose,
         'dontAskExit': dontAskExit,
         'actionCooldownMs': actionCooldownMs,
+        'showOverlay': showOverlay,
         'configs': configs.map((key, value) => MapEntry(key, value.toJson())),
       };
 
