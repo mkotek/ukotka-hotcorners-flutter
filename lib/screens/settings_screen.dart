@@ -408,10 +408,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Text("Opóźnienie między akcjami (Cooldown)", style: TextStyle(fontWeight: FontWeight.bold)),
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text("Opóźnienie między akcjami (Cooldown)", style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
